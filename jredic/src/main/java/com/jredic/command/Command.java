@@ -16,4 +16,12 @@ public interface Command {
      */
     String getCommand();
 
+    /**
+     * 获取起始版本值。
+     *
+     * @return
+     *     FIXME 描述
+     */
+    int getSinceVersionValue();
+
 }

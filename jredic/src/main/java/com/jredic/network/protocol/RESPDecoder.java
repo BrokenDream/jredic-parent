@@ -139,6 +139,8 @@ public class RESPDecoder extends ByteToMessageDecoder {
                     bulkStringsHeader = Integer.parseInt(header);
                 } catch (NumberFormatException e){
                     throw new RESPException("can't parse [" + header + "] to int value");
+                } finally{
+//                    headerBytes.release();
                 }
             }
             if(bulkStringsHeader == 0){
@@ -157,12 +159,14 @@ public class RESPDecoder extends ByteToMessageDecoder {
                 if(!in.isReadable(bulkStringsHeader)){
                     return null;
                 }
-                ByteBuf contentBytes = in.readSlice(bulkStringsHeader).retain();
+                ByteBuf contentBytes = in.readSlice(bulkStringsHeader);
                 String content = contentBytes.toString(CharsetUtil.UTF_8);
                 //skip \r\n
                 in.skipBytes(RESPConstants.CRLF_LENGTH);
                 resetBulkStringsHeader();
-                return new BulkStringsData(content);
+                BulkStringsData data = new BulkStringsData(content);
+//                contentBytes.release();
+                return data;
             }
         }
     }
@@ -187,7 +191,7 @@ public class RESPDecoder extends ByteToMessageDecoder {
         if(crlfIndex - in.readerIndex() > maxIntegersLength){
             throw new RESPException("redis integers data length exceed " + maxIntegersLength);
         }
-        ByteBuf byteBuf = in.readSlice(crlfIndex - in.readerIndex()).retain();
+        ByteBuf byteBuf = in.readSlice(crlfIndex - in.readerIndex());
         String str = byteBuf.toString(CharsetUtil.UTF_8);
         try{
             long value = Long.parseLong(str);
@@ -196,6 +200,8 @@ public class RESPDecoder extends ByteToMessageDecoder {
             return new IntegersData(value);
         } catch (NumberFormatException e){
             throw new RESPException("can't parse [" + str + "] to long value");
+        } finally{
+//            byteBuf.release();
         }
 
     }
@@ -211,10 +217,12 @@ public class RESPDecoder extends ByteToMessageDecoder {
         if(crlfIndex - in.readerIndex() > RESPConstants.REDIS_DATA_MAX_INLINE_LENGTH){
             throw new RESPException("redis data length exceed " + RESPConstants.REDIS_DATA_MAX_INLINE_LENGTH);
         }
-        ByteBuf byteBuf = in.readSlice(crlfIndex - in.readerIndex()).retain();
+        ByteBuf byteBuf = in.readSlice(crlfIndex - in.readerIndex());
+        ErrorsData data = new ErrorsData(byteBuf.toString(CharsetUtil.UTF_8));
         //skip \r\n
         in.skipBytes(RESPConstants.CRLF_LENGTH);
-        return new ErrorsData(byteBuf.toString(CharsetUtil.UTF_8));
+//        byteBuf.release();
+        return data;
     }
 
     private Data decodeSimpleStringsData(ByteBuf in) {
@@ -228,10 +236,12 @@ public class RESPDecoder extends ByteToMessageDecoder {
         if(crlfIndex - in.readerIndex() > RESPConstants.REDIS_DATA_MAX_INLINE_LENGTH){
             throw new RESPException("redis data length exceed " + RESPConstants.REDIS_DATA_MAX_INLINE_LENGTH);
         }
-        ByteBuf byteBuf = in.readSlice(crlfIndex - in.readerIndex()).retain();
+        ByteBuf byteBuf = in.readSlice(crlfIndex - in.readerIndex());
+        SimpleStringsData data = new SimpleStringsData(byteBuf.toString(CharsetUtil.UTF_8));
         //skip \r\n
         in.skipBytes(RESPConstants.CRLF_LENGTH);
-        return new SimpleStringsData(byteBuf.toString(CharsetUtil.UTF_8));
+//        byteBuf.release();
+        return data;
     }
 
     private int findCRLF(ByteBuf in) {

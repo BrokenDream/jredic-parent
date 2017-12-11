@@ -93,6 +93,7 @@ public class RESPEncoder extends MessageToByteEncoder<Data> {
             out.writeBytes(buffer);
             //write CRLF
             out.writeShort(RESPConstants.CRLF);
+            buffer.release();
         }
     }
 

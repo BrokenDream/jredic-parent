@@ -32,4 +32,9 @@ public class Commands {
         return new ArraysData(elements);
     }
 
+    public static int getValueFromSinceVersion(String sinceVersion){
+        String[] values = sinceVersion.split("\\.");
+        return Integer.parseInt(values[0]) * 100 + Integer.parseInt(values[1]) * 10 + Integer.parseInt(values[2]);
+    }
+
 }

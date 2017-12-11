@@ -37,6 +37,8 @@ public class DefaultClient implements Client {
     //server port.
     private int serverPort;
 
+    private int serverSvv = 280;
+
     //netty components
     private EventLoopGroup group;
     private Bootstrap bootstrap;

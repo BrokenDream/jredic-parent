@@ -3,13 +3,15 @@ package com.jredic.network.protocol;
 import com.jredic.network.client.support.DefaultClient;
 import com.jredic.support.DefaultJredic;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author David.W
  */
 public class DefaultJredicTest {
 
     public static void main(String[] args){
-        DefaultJredic jredic = new DefaultJredic();
+       final DefaultJredic jredic = new DefaultJredic();
 
         DefaultClient client = new DefaultClient("10.10.40.120", 6379);
         client.start();
@@ -47,17 +49,26 @@ public class DefaultJredicTest {
 //        System.out.println(jredic.move("wuhong1234", 100));
 //        System.out.println(jredic.keys("wuhong*"));
 //        System.out.println(jredic.randomKey());
-        for(int i=0;i<100;i++){
-            String key = jredic.randomKey();
-            System.out.println("key=["+key+"],type=["+jredic.type(key)+"]");
+        for(int i=0;i<1;i++){
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    String key = jredic.randomKey();
+                    System.out.println("key=["+key+"],type=["+jredic.type(key)+"]");
+                }
+            }).start();
+
         }
 
 //        System.out.println(jredic.pexpire("wuhong123",60000));
 //        System.out.println(jredic.expire("wuhong123123",10));
 
 
-
-
+        try {
+            TimeUnit.MINUTES.sleep(5);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         client.stop();
     }
 

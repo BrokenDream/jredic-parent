@@ -43,10 +43,6 @@
     </properties>
 
     <modules>
-        <module>network</module>
-        <module>common</module>
-        <module>command</module>
-        <module>client</module>
         <module>jredic</module>
     </modules>
 
