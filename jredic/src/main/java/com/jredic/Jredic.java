@@ -3,6 +3,9 @@ package com.jredic;
 import java.util.List;
 
 /**
+ * The core interface of Java Remote Dictionary Client.
+ *
+ *
  * @author David.W
  */
 public interface Jredic {

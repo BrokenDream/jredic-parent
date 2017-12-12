@@ -49,7 +49,7 @@ public class DefaultJredicTest {
 //        System.out.println(jredic.move("wuhong1234", 100));
 //        System.out.println(jredic.keys("wuhong*"));
 //        System.out.println(jredic.randomKey());
-        for(int i=0;i<1;i++){
+        for(int i=0;i<1000;i++){
             new Thread(new Runnable() {
                 @Override
                 public void run() {

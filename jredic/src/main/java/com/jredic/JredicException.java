@@ -1,7 +1,7 @@
 package com.jredic;
 
 /**
- *
+ * The exception for Jredic.
  *
  * @author David.W
  */

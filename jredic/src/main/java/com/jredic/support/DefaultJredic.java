@@ -6,7 +6,7 @@ import com.jredic.RedisDataType;
 import com.jredic.command.Command;
 import com.jredic.command.Commands;
 import com.jredic.command.KeyCommand;
-import com.jredic.command.StringsCommand;
+import com.jredic.command.StringCommand;
 import com.jredic.network.protocol.DataTypeNotSupportException;
 import com.jredic.network.client.Client;
 import com.jredic.network.protocol.data.*;
@@ -242,12 +242,12 @@ public class DefaultJredic implements Jredic {
 
     @Override
     public void set(String key, String value) {
-        process(StringsCommand.SET, OK_ACTION, key, value);
+        process(StringCommand.SET, OK_ACTION, key, value);
     }
 
     @Override
     public String get(String key) {
-        return process(StringsCommand.GET, STRING_ACTION, key);
+        return process(StringCommand.GET, STRING_ACTION, key);
     }
 
 

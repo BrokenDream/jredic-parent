@@ -19,8 +19,6 @@ public class RESPConstants {
 
     public static final int POSITIVE_LONG_MAX_LENGTH = 19; // length of Long.MAX_VALUE
 
-    public static final int LONG_MAX_LENGTH = POSITIVE_LONG_MAX_LENGTH + 1; // +1 is sign
-
     public static final int REDIS_DATA_MAX_INLINE_LENGTH = 1024 * 64;
 
     //such as '+\r\n'、'-\r\n'

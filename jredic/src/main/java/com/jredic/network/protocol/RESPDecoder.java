@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Decodes bytes into {@link Data} following <a href="http://redis.io/topics/protocol">RESP</a>.
+ *
  * @author David.W
  */
 public class RESPDecoder extends ByteToMessageDecoder {
@@ -139,8 +141,6 @@ public class RESPDecoder extends ByteToMessageDecoder {
                     bulkStringsHeader = Integer.parseInt(header);
                 } catch (NumberFormatException e){
                     throw new RESPException("can't parse [" + header + "] to int value");
-                } finally{
-//                    headerBytes.release();
                 }
             }
             if(bulkStringsHeader == 0){
@@ -165,7 +165,6 @@ public class RESPDecoder extends ByteToMessageDecoder {
                 in.skipBytes(RESPConstants.CRLF_LENGTH);
                 resetBulkStringsHeader();
                 BulkStringsData data = new BulkStringsData(content);
-//                contentBytes.release();
                 return data;
             }
         }
@@ -200,8 +199,6 @@ public class RESPDecoder extends ByteToMessageDecoder {
             return new IntegersData(value);
         } catch (NumberFormatException e){
             throw new RESPException("can't parse [" + str + "] to long value");
-        } finally{
-//            byteBuf.release();
         }
 
     }
@@ -221,7 +218,6 @@ public class RESPDecoder extends ByteToMessageDecoder {
         ErrorsData data = new ErrorsData(byteBuf.toString(CharsetUtil.UTF_8));
         //skip \r\n
         in.skipBytes(RESPConstants.CRLF_LENGTH);
-//        byteBuf.release();
         return data;
     }
 
@@ -240,7 +236,6 @@ public class RESPDecoder extends ByteToMessageDecoder {
         SimpleStringsData data = new SimpleStringsData(byteBuf.toString(CharsetUtil.UTF_8));
         //skip \r\n
         in.skipBytes(RESPConstants.CRLF_LENGTH);
-//        byteBuf.release();
         return data;
     }
 

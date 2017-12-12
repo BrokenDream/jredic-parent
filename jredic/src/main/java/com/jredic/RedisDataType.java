@@ -4,6 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * The redis data type.
+ * see the response value for command 'type'.
+ *
  * @author David.W
  */
 public enum RedisDataType {
@@ -23,6 +26,7 @@ public enum RedisDataType {
     }
 
     private static final Map<String, RedisDataType> INNER_MAP = new HashMap<>();
+
     static{
         for(RedisDataType value : RedisDataType.values()){
             INNER_MAP.put(value.type, value);
