@@ -105,6 +105,11 @@ public class DefaultJredic implements Jredic {
     }
 
     @Override
+    public void restore(String key, int ttl, String serializedValue) {
+        process(KeyCommand.RESTORE, OK_ACTION, Integer.toString(ttl), serializedValue);
+    }
+
+    @Override
     public RedisDataType type(String key) {
         return process(KeyCommand.TYPE, new Action<RedisDataType>() {
             @Override
@@ -115,6 +120,21 @@ public class DefaultJredic implements Jredic {
                 throw ACTION_EXCEPTION;
             }
         }, key);
+    }
+
+    @Override
+    public long append(String key, String value) {
+        return process(StringCommand.APPEND, LONG_ACTION, key, value);
+    }
+
+    @Override
+    public long bitCount(String key) {
+        return process(StringCommand.BITCOUNT, LONG_ACTION, key);
+    }
+
+    @Override
+    public long bitCount(String key, int start, int end) {
+        return process(StringCommand.BITCOUNT, LONG_ACTION, key, Integer.toString(start), Integer.toString(end));
     }
 
 

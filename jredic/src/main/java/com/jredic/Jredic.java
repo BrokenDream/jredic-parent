@@ -140,7 +140,7 @@ public interface Jredic {
      *
      * @param pattern the key pattern.
      * @return
-     *      list of keys matching pattern.
+     *      list of keys matching pattern;if no matched key,return null;
      */
     List<String> keys(String pattern);
 
@@ -201,13 +201,93 @@ public interface Jredic {
      */
     long pttl(String key);
 
+    /**
+     * Return a random key from the currently selected database.
+     *
+     * @return
+     *      the random key, or null when the database is empty.
+     */
     String randomKey();
 
+    /**
+     * Renames key to newkey. It throw an {@link JredicException} when key does not exist.
+     * If newkey already exists it is overwritten, when this happens RENAME executes
+     * an implicit DEL operation, so if the deleted key contains a very big value
+     * it may cause high latency even if RENAME itself is usually a constant-time operation.
+     *
+     * @param key the key to rename.
+     * @param newKey the new name.
+     */
     void rename(String key, String newKey);
 
+    /**
+     * Renames key to newkey if newkey does not yet exist.
+     * It throw an {@link JredicException} when key does not exist.
+     *
+     * @param key the key to rename.
+     * @param newKey the new name.
+     * @return
+     *      true if key was renamed to newKey;false if newKey already exists.
+     */
     boolean renamenx(String key, String newKey);
 
+    /**
+     * Create a key associated with a value that is obtained by deserializing
+     * the provided serialized value (obtained via DUMP).If ttl is 0 the key
+     * is created without any expire, otherwise the specified expire time (in milliseconds) is set.
+     *
+     * @param key the key to restore.
+     * @param ttl expire time in milliseconds.
+     * @param serializedValue serialized value associate to the key.
+     */
+    void restore(String key, int ttl, String serializedValue);
+
+    /**
+     * Returns the type of the value stored at key.
+     * @see RedisDataType
+     *
+     * @param key the key to get type.
+     * @return
+     *      the type of value at key;null if key does not exist.
+     */
     RedisDataType type(String key);
+
+
+    /*
+     * ops to manage 'String'
+     */
+
+    /**
+     * If key already exists and is a string, this method appends the value at the end of the string.
+     * If key does not exist it is created and set as an empty string, so it will be similar
+     * to {@link #set(String, String)} in this special case.
+     *
+     * @param key the key to be appended.
+     * @param value appended value.
+     * @return
+     *      the length of the string after the append.
+     */
+    long append(String key, String value);
+
+    /**
+     * Count the number of set bits (population counting) in a string.
+     *
+     * @param key the key to count bit.
+     * @return
+     *      The number of bits set to 1.
+     */
+    long bitCount(String key);
+
+    /**
+     * Count the number of set bits (population counting) in a string from start to end.
+     *
+     * @param key the key to count bit.
+     * @param start start index.
+     * @param end end index.
+     * @return
+     *      The number of bits set to 1.
+     */
+    long bitCount(String key, int start, int end);
 
     void set(String key, String value);
 
