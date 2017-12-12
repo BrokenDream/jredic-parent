@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * The default implementation for Jredic.
+ *
  * @author David.W
  */
 public class DefaultJredic implements Jredic {
@@ -24,6 +26,12 @@ public class DefaultJredic implements Jredic {
     @Override
     public long del(String... keys) {
         return process(KeyCommand.DEL, LONG_ACTION, keys);
+    }
+
+    @Override
+    public boolean del(String key) {
+        long number = process(KeyCommand.DEL, LONG_ACTION, key);
+        return number != 0;
     }
 
     @Override

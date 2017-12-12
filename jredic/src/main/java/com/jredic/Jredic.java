@@ -17,16 +17,27 @@ public interface Jredic {
     /**
      * Removes the specified keys.
      *
-     * @param key the key to remove.
+     * @param keys the keys to remove.
      * @return
      *      The number of keys that were removed.
      */
-    long del(String ... key);
+    long del(String ... keys);
+
+    /**
+     * Removes the specified key.
+     *
+     * @param key the key to remove.
+     * @return
+     *      true if key was removed;false if key does not exist.
+     */
+    boolean del(String key);
 
     /**
      * Serialize the value stored at key in a Redis-specific format and return it to the user.
-     * <p>The returned value can be synthesized back into a Redis key using the RESTORE command.
-     * <p>The serialization format is opaque and non-standard, however it has a few semantic characteristics:
+     * <p>
+     * The returned value can be synthesized back into a Redis key using the RESTORE command.
+     * <p>
+     * The serialization format is opaque and non-standard, however it has a few semantic characteristics:
      * <li>
      *     It contains a 64-bit checksum that is used to make sure errors will be detected.
      *     The RESTORE command makes sure to check the checksum before synthesizing a key using the serialized value.
@@ -38,8 +49,9 @@ public interface Jredic {
      *     An RDB version is encoded inside the serialized value, so that different Redis versions with
      *     incompatible RDB formats will refuse to process the serialized value.
      * </li>
-     *  <p>The serialized value does NOT contain expire information.
-     *  In order to capture the time to live of the current value the PTTL command should be used.
+     * <p>
+     * The serialized value does NOT contain expire information.
+     * In order to capture the time to live of the current value the PTTL command should be used.
      *
      * @param key the key to dump.
      * @return
@@ -81,17 +93,19 @@ public interface Jredic {
     boolean expireAt(String key, long unixTimeInSeconds);
 
     /**
-     * This method works exactly like expire
+     * This method works exactly like {@link #expire(String, int)}.
      * but the time to live of the key is specified in milliseconds instead of seconds.
      *
      * @param key the key to expire
      * @param millis the expire time in milliseconds
      * @return
+     *      if the timeout was set,return true;
+     *      if key does not exist,return false.
      */
     boolean pexpire(String key, long millis);
 
     /**
-     * PEXPIREAT has the same effect and semantic as EXPIREAT,
+     * This method works exactly like {@link #expireAt(String, long)}.
      * but the Unix time at which the key will expire is specified in milliseconds instead of seconds.
      *
      * @param key the key to expire
@@ -104,6 +118,25 @@ public interface Jredic {
 
     /**
      * Returns all keys matching pattern.
+     * <p>
+     * Supported glob-style patterns:
+     * <li>
+     *     h?llo matches hello, hallo and hxllo
+     * </li>
+     * <li>
+     *     h*llo matches hllo and heeeello
+     * </li>
+     * <li>
+     *     h[ae]llo matches hello and hallo, but not hillo
+     * </li>
+     * <li>
+     *     h[^e]llo matches hallo, hbllo, ... but not hello
+     * </li>
+     * <li>
+     *     h[a-b]llo matches hallo and hbllo
+     * </li>
+     * <p>
+     * Use '\' to escape special characters if you want to match them verbatim.
      *
      * @param pattern the key pattern.
      * @return
@@ -112,7 +145,7 @@ public interface Jredic {
     List<String> keys(String pattern);
 
     /**
-     * Move key from the currently selected database (see SELECT) to the specified destination database.
+     * Move key from the currently selected database to the specified destination database.
      * When key already exists in the destination database, or it does not exist in the source database,
      * it does nothing. It is possible to use MOVE as a locking primitive because of this.
      *
@@ -134,8 +167,38 @@ public interface Jredic {
      */
     boolean persist(String key);
 
+    /**
+     * Returns the remaining time to live of a key that has a timeout.
+     * <p>
+     * This introspection capability allows a Redis client to check how many seconds a given key will
+     * continue to be part of the dataset.
+     * <p>
+     * In Redis 2.6 or older the command returns -1 if the key does not exist
+     * or if the key exist but has no associated expire.
+     * <p>
+     * Starting with Redis 2.8 the return value in case of error changed:
+     * <li>
+     *     The command returns -2 if the key does not exist.
+     * </li>
+     * <li>
+     *     The command returns -1 if the key exists but has no associated expire.
+     * </li>
+     *
+     * @param key the key to get TTL.
+     * @return
+     *      TTL in seconds, or a negative value in order to signal an error.
+     */
     long ttl(String key);
 
+    /**
+     * Like {@link #ttl(String)} this method returns the remaining time to live of a key
+     * that has an expire set, with the sole difference that {@link #ttl(String)} returns
+     * the amount of remaining time in seconds while {@link #pttl(String)} returns it in milliseconds.
+     *
+     * @param key the key to get TTL in milliseconds.
+     * @return
+     *      TTL in milliseconds, or a negative value in order to signal an error.
+     */
     long pttl(String key);
 
     String randomKey();

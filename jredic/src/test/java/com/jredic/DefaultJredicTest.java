@@ -1,4 +1,4 @@
-package com.jredic.network.protocol;
+package com.jredic;
 
 import com.jredic.network.client.support.DefaultClient;
 import com.jredic.support.DefaultJredic;

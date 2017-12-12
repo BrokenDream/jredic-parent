@@ -5,7 +5,6 @@ import com.jredic.network.client.Client;
 import com.jredic.network.protocol.RESPDecoder;
 import com.jredic.network.protocol.RESPEncoder;
 import com.jredic.network.protocol.data.ArraysData;
-import com.jredic.network.protocol.data.BulkStringsData;
 import com.jredic.network.protocol.data.Data;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -14,15 +13,11 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import io.netty.util.concurrent.GenericFutureListener;
-
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * The client base on Netty.
+ * The default implementation base on Netty.
  *
  * @author David.W
  */
@@ -37,14 +32,20 @@ public class DefaultClient implements Client {
     //server port.
     private int serverPort;
 
-    private int serverSvv = 280;
+    //if true,we add a LoggingHandler.
+    private boolean logFlag;
 
     //netty components
     private EventLoopGroup group;
     private Bootstrap bootstrap;
     private Channel channel;
 
-    //the transmitter of Redis Data
+    /*
+     * the transmitter of Redis Data.
+     * as we know that ops always asynchronous in netty,
+     * but we want send the request and wait for the response.
+     * so we set a 'transmitter' here and wait on it for response.
+     */
     private SynchronousQueue<Data> transmitter = new SynchronousQueue<>();
 
     //make true the Request-Response sequentially.
@@ -53,6 +54,12 @@ public class DefaultClient implements Client {
     public DefaultClient(String serverHost, int serverPort) {
         this.serverHost = serverHost;
         this.serverPort = serverPort;
+    }
+
+    public DefaultClient(String serverHost, int serverPort, boolean logFlag) {
+        this.serverHost = serverHost;
+        this.serverPort = serverPort;
+        this.logFlag = logFlag;
     }
 
     @Override
@@ -68,7 +75,9 @@ public class DefaultClient implements Client {
                             @Override
                             protected void initChannel(SocketChannel ch) throws Exception {
                                 ChannelPipeline p = ch.pipeline();
-                              //  p.addLast(new LoggingHandler(LogLevel.INFO));
+                                if(logFlag){
+                                    p.addLast(new LoggingHandler(LogLevel.INFO));
+                                }
                                 p.addLast(new RESPDecoder());
                                 p.addLast(new RESPEncoder());
                                 p.addLast(new ClientHandler(transmitter));
@@ -85,7 +94,7 @@ public class DefaultClient implements Client {
          ChannelFuture channelFuture = bootstrap.connect().addListener(new ChannelFutureListener() {
              @Override
              public void operationComplete(ChannelFuture future) throws Exception {
-                 //
+                 //FIXME
              }
          });
          channel = channelFuture.sync().channel();
@@ -105,15 +114,12 @@ public class DefaultClient implements Client {
         try{
             semaphore.acquire();
             channel.writeAndFlush(request);
-            Data data = transmitter.take();
-            semaphore.release();
-            return data;
-
+            return transmitter.take();
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new JredicException("error occur in send process!", e);
+        } finally {
+            semaphore.release();
         }
-
-        return null;
     }
 
 }

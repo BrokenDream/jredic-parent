@@ -12,20 +12,21 @@ import com.jredic.network.protocol.data.Data;
 public interface Client {
 
     /**
-     * start the client
+     * Start the client.
      */
     void start();
 
     /**
-     * stop the client
+     * Stop the client.
      */
     void stop();
 
     /**
-     * send data
+     * Send the Request data and return the Response data.
      *
-     * @param request
+     * @param request request data.
      * @return
+     *      response data.
      */
     Data send(ArraysData request) throws JredicException;
 
