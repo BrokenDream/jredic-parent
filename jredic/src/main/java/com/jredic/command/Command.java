@@ -27,6 +27,6 @@ public interface Command {
      * @return
      *     the int value represents the 'Start Version'.
      */
-    int svv();
+    long svv();
 
 }

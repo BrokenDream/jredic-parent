@@ -57,7 +57,7 @@ public interface Jredic {
      * @return
      *      the serialized value.If key does not exist a nil bulk reply is returned.
      */
-    String dump(String key);
+    byte[] dump(String key);
 
     /**
      * Test if the specified key exists.

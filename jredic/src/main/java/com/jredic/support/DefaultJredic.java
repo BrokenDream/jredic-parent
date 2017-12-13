@@ -10,6 +10,8 @@ import com.jredic.command.StringCommand;
 import com.jredic.network.protocol.DataTypeNotSupportException;
 import com.jredic.network.client.Client;
 import com.jredic.network.protocol.data.*;
+import io.netty.util.CharsetUtil;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,8 +22,10 @@ import java.util.List;
  */
 public class DefaultJredic implements Jredic {
 
+    /*
+     * the client for network.
+     */
     private Client client;
-
 
     @Override
     public long del(String... keys) {
@@ -35,8 +39,16 @@ public class DefaultJredic implements Jredic {
     }
 
     @Override
-    public String dump(String key) {
-        return process(KeyCommand.DUMP, STRING_ACTION, key);
+    public byte[] dump(String key) {
+        return process(KeyCommand.DUMP, new Action<byte[]>() {
+            @Override
+            public byte[] doAction(Data data) throws JredicException {
+                if(DataType.BULK_STRINGS.equals(data.getType())){
+                    return ((BulkStringsData) data).getContent().getBytes(CharsetUtil.UTF_8);
+                }
+                throw ACTION_EXCEPTION;
+            }
+        }, key);
     }
 
     @Override
@@ -281,6 +293,36 @@ public class DefaultJredic implements Jredic {
 
     public void setClient(Client client) {
         this.client = client;
+    }
+
+    /**
+     * init resources.
+     *
+     * @throws JredicException
+     */
+    public void init() throws JredicException{
+
+        try{
+            this.client.start();
+        } catch (Exception e){
+            throw new JredicException("DefaultJredic init failed!", e);
+        }
+
+    }
+
+    /**
+     * destroy resources.
+     *
+     * @throws JredicException
+     */
+    public void destroy() throws JredicException{
+
+        try{
+            this.client.stop();
+        } catch (Exception e){
+            throw new JredicException("DefaultJredic destroy failed!", e);
+        }
+
     }
 
 }

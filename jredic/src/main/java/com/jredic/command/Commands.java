@@ -36,15 +36,19 @@ public class Commands {
 
     /**
      * Convert Start Version to a int value.
-     * if the Start Version is X.Y.Z, then the Value is 'X*1000 + Y*100 + Z'.
+     * if the Start Version is X.Y.Z, then the Value is 'X*10000000000 + Y*100000 + Z'.
      *
      * @param startVersion a version type of String.
      * @return
      *      a int value represents the Start Version.
      */
-    static int getValueFromStartVersion(String startVersion){
+    static long getValueFromStartVersion(String startVersion){
         String[] values = startVersion.split("\\.");
-        return Integer.parseInt(values[0]) * 10000 + Integer.parseInt(values[1]) * 100 + Integer.parseInt(values[2]);
+        /*
+         * today when i download Redis Server (Windows Version),
+         * i found some 'Version' like '2.8.2402' ... holy...
+         */
+        return Long.parseLong(values[0]) * 10000000000L + Long.parseLong(values[1]) * 100000 + Long.parseLong(values[2]);
     }
 
 }
