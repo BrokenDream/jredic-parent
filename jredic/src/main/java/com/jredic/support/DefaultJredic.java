@@ -11,6 +11,8 @@ import com.jredic.network.protocol.DataTypeNotSupportException;
 import com.jredic.network.client.Client;
 import com.jredic.network.protocol.data.*;
 import io.netty.util.CharsetUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +23,8 @@ import java.util.List;
  * @author David.W
  */
 public class DefaultJredic implements Jredic {
+
+    private static final Logger logger = LoggerFactory.getLogger(DefaultJredic.class);
 
     /*
      * the client for network.
@@ -154,6 +158,9 @@ public class DefaultJredic implements Jredic {
     private <R> R process(Command cmd, Action<R> action, String ... args){
 
         ArraysData request = Commands.createRequest(cmd, args);
+        if(!client.isRunning()){
+            throw new JredicException("the client for network is stopped!");
+        }
         Data response = client.send(request);
         DataType dataType = response.getType();
         try{

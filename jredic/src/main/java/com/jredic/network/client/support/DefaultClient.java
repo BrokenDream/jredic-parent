@@ -38,7 +38,7 @@ public class DefaultClient implements Client {
     //netty components
     private EventLoopGroup group;
     private Bootstrap bootstrap;
-    private Channel channel;
+    private volatile Channel channel;
 
     /*
      * the transmitter of Redis Data.
@@ -50,6 +50,8 @@ public class DefaultClient implements Client {
 
     //make true the Request-Response sequentially.
     private Semaphore semaphore = new Semaphore(1);
+
+    private Executor reconnectExecutor = Executors.newSingleThreadExecutor();
 
     public DefaultClient(String serverHost, int serverPort) {
         this.serverHost = serverHost;
@@ -80,7 +82,7 @@ public class DefaultClient implements Client {
                                 }
                                 p.addLast(new RESPDecoder());
                                 p.addLast(new RESPEncoder());
-                                p.addLast(new ClientHandler(transmitter));
+                                p.addLast(new ClientHandler(DefaultClient.this, transmitter, reconnectExecutor));
                             }
                         });
                 connect();
@@ -90,14 +92,15 @@ public class DefaultClient implements Client {
         }
     }
 
-    private void connect() throws InterruptedException {
-         ChannelFuture channelFuture = bootstrap.connect().addListener(new ChannelFutureListener() {
-             @Override
-             public void operationComplete(ChannelFuture future) throws Exception {
-                 //FIXME
-             }
-         });
-         channel = channelFuture.sync().channel();
+    public void connect() throws Exception {
+        channel = bootstrap.connect().sync().channel();
+    }
+
+    public boolean isConnected(){
+        if(channel == null){
+            return false;
+        }
+        return channel.isActive() && channel.isOpen();
     }
 
     @Override
@@ -110,10 +113,15 @@ public class DefaultClient implements Client {
     }
 
     @Override
+    public boolean isRunning() {
+        return isStarted.get();
+    }
+
+    @Override
     public Data send(ArraysData request) {
         try{
             semaphore.acquire();
-            channel.writeAndFlush(request);
+            channel.writeAndFlush(request).sync();
             return transmitter.take();
         } catch (Exception e) {
             throw new JredicException("error occur in send process!", e);

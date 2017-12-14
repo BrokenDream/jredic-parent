@@ -22,6 +22,14 @@ public interface Client {
     void stop();
 
     /**
+     * test if the client is running.
+     *
+     * @return
+     *      if the client is running,return true;else return false.
+     */
+    boolean isRunning();
+
+    /**
      * Send the Request data and return the Response data.
      *
      * @param request request data.
