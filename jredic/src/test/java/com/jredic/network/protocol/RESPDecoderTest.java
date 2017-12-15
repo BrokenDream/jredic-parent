@@ -65,7 +65,7 @@ public class RESPDecoderTest {
         DECODER.decode(null, in, out);
         Assert.assertTrue(out.size() ==  1);
         BulkStringsData data = (BulkStringsData) out.get(0);
-        Assert.assertEquals(content, data.getContent());
+        Assert.assertEquals(content, data.getStringContent());
     }
 
     @Test

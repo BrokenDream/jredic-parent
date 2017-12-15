@@ -1,5 +1,7 @@
 package com.jredic.util;
 
+import java.nio.charset.Charset;
+
 /**
  * Utility methods for String.
  *
@@ -17,5 +19,18 @@ public class Strings {
     public static boolean isNullOrEmpty(String s){
         return s == null || s.isEmpty();
     }
+
+    /**
+     * decode a String to byte array by UTF-8 charset.
+     *
+     * @param s a string to decode.
+     * @return
+     *      a byte array from s.
+     */
+    public static byte[] decodeByUTF8(String s){
+        return s.getBytes(Charset.forName("utf-8"));
+    }
+
+    private Strings(){}
 
 }

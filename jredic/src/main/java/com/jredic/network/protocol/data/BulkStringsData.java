@@ -1,5 +1,9 @@
 package com.jredic.network.protocol.data;
 
+import com.jredic.util.Strings;
+
+import java.nio.charset.Charset;
+
 /**
  * See <a href="https://redis.io/topics/protocol#resp-bulk-strings">RESP#resp-bulk-strings</a>.
  *
@@ -7,10 +11,23 @@ package com.jredic.network.protocol.data;
  */
 public class BulkStringsData implements Data {
 
-    private String content;
+    /*
+     * we use 'content' to keep the real data.
+     * and use 'stringContent' for convenient.
+     */
 
-    public BulkStringsData(String content) {
+    private byte[] content;
+
+    private volatile String stringContent;
+
+    public BulkStringsData(String stringContent) {
+        this.stringContent = stringContent;
+        this.content = Strings.decodeByUTF8(stringContent);
+    }
+
+    public BulkStringsData(byte[] content) {
         this.content = content;
+        this.stringContent = new String(content, Charset.forName("utf-8"));
     }
 
     public BulkStringsData(){
@@ -21,8 +38,12 @@ public class BulkStringsData implements Data {
         return DataType.BULK_STRINGS;
     }
 
-    public String getContent() {
+    public byte[] getContent() {
         return content;
+    }
+
+    public String getStringContent(){
+        return stringContent;
     }
 
     private static final BulkStringsData NULL_BULK_STRING = new BulkStringsData();
@@ -47,6 +68,6 @@ public class BulkStringsData implements Data {
 
     @Override
     public String toString() {
-        return "BulkStringsData[" + content + "]";
+        return "BulkStringsData[" + stringContent + "]";
     }
 }

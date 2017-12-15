@@ -1,6 +1,8 @@
 package com.jredic;
 
 import com.jredic.command.sub.BitOP;
+import com.jredic.exception.JredicException;
+import com.jredic.exception.IllegalParameterException;
 
 import java.util.List;
 
@@ -18,10 +20,13 @@ public interface Jredic {
 
     /**
      * Removes the specified keys.
+     * A key is ignored if it does not exist.
      *
      * @param keys the keys to remove.
      * @return
      *      The number of keys that were removed.
+     * @throws IllegalParameterException if keys is empty.
+     * @throws JredicException if some other err occur.
      */
     long del(String ... keys);
 
@@ -31,33 +36,19 @@ public interface Jredic {
      * @param key the key to remove.
      * @return
      *      true if key was removed;false if key does not exist.
+     * @throws IllegalParameterException if key is blank.
+     * @throws JredicException if some other err occur.
      */
     boolean del(String key);
 
     /**
      * Serialize the value stored at key in a Redis-specific format and return it to the user.
-     * <p>
-     * The returned value can be synthesized back into a Redis key using the RESTORE command.
-     * <p>
-     * The serialization format is opaque and non-standard, however it has a few semantic characteristics:
-     * <li>
-     *     It contains a 64-bit checksum that is used to make sure errors will be detected.
-     *     The RESTORE command makes sure to check the checksum before synthesizing a key using the serialized value.
-     * </li>
-     * <li>
-     *     Values are encoded in the same format used by RDB.
-     * </li>
-     * <li>
-     *     An RDB version is encoded inside the serialized value, so that different Redis versions with
-     *     incompatible RDB formats will refuse to process the serialized value.
-     * </li>
-     * <p>
-     * The serialized value does NOT contain expire information.
-     * In order to capture the time to live of the current value the PTTL command should be used.
      *
      * @param key the key to dump.
      * @return
-     *      the serialized value.If key does not exist a nil bulk reply is returned.
+     *      the serialized value.If key does not exist, return null.
+     * @throws IllegalParameterException if key is blank.
+     * @throws JredicException if some other err occur.
      */
     byte[] dump(String key);
 
@@ -67,8 +58,24 @@ public interface Jredic {
      * @param key the key to test.
      * @return
      *      if the key exists,return true;otherwise false.
+     * @throws IllegalParameterException if key is blank.
+     * @throws JredicException if some other err occur.
      */
     boolean exists(String key);
+
+    /**
+     * Test if the specified keys exists.
+     * @since Redis Server Version:3.0.3.
+     *
+     * @param firstKey the first key to test.
+     * @param otherKeys the other keys to test.
+     * @return
+     *      The number of keys existing among the ones specified as arguments.
+     *      Keys mentioned multiple times and existing are counted multiple times.
+     * @throws IllegalParameterException if firstKey is blank OR otherKeys is empty.
+     * @throws JredicException if some other err occur.
+     */
+    long exists(String firstKey, String ... otherKeys);
 
     /**
      * Set a timeout on key. After the timeout has expired, the key will automatically be deleted.
@@ -78,6 +85,8 @@ public interface Jredic {
      * @return
      *      if the timeout was set,return true;
      *      if key does not exist,return false.
+     * @throws IllegalParameterException if key is blank.
+     * @throws JredicException if some other err occur.
      */
     boolean expire(String key, int seconds);
 
@@ -91,6 +100,8 @@ public interface Jredic {
      * @return
      *      if the timeout was set,return true;
      *      if key does not exist,return false.
+     * @throws IllegalParameterException if key is blank.
+     * @throws JredicException if some other err occur.
      */
     boolean expireAt(String key, long unixTimeInSeconds);
 
@@ -103,6 +114,8 @@ public interface Jredic {
      * @return
      *      if the timeout was set,return true;
      *      if key does not exist,return false.
+     * @throws IllegalParameterException if key is blank.
+     * @throws JredicException if some other err occur.
      */
     boolean pexpire(String key, long millis);
 
@@ -115,6 +128,8 @@ public interface Jredic {
      * @return
      *      if the timeout was set,return true;
      *      if key does not exist,return false.
+     * @throws IllegalParameterException if key is blank.
+     * @throws JredicException if some other err occur.
      */
     boolean pexpireAt(String key, long unixTimeInMillis);
 
@@ -143,18 +158,23 @@ public interface Jredic {
      * @param pattern the key pattern.
      * @return
      *      list of keys matching pattern;if no matched key,return null;
+     * @throws IllegalParameterException if pattern is blank.
+     * @throws JredicException if some other err occur.
      */
     List<String> keys(String pattern);
 
     /**
      * Move key from the currently selected database to the specified destination database.
-     * When key already exists in the destination database, or it does not exist in the source database,
-     * it does nothing. It is possible to use MOVE as a locking primitive because of this.
+     * When key already exists in the destination database,
+     * or it does not exist in the source database,it does nothing.
+     * It is possible to use MOVE as a locking primitive because of this.
      *
      * @param key the key to move
      * @param dbIndex the index of dest db.
      * @return
      *      if key was moved,return true;otherwise return false.
+     * @throws IllegalParameterException if key is blank.
+     * @throws JredicException if some other err occur.
      */
     boolean move(String key, int dbIndex);
 
@@ -166,6 +186,8 @@ public interface Jredic {
      * @return
      *      if the timeout was removed,return true;
      *      if key does not exist or does not have an associated timeout,return false.
+     * @throws IllegalParameterException if key is blank.
+     * @throws JredicException if some other err occur.
      */
     boolean persist(String key);
 
@@ -189,6 +211,8 @@ public interface Jredic {
      * @param key the key to get TTL.
      * @return
      *      TTL in seconds, or a negative value in order to signal an error.
+     * @throws IllegalParameterException if key is blank.
+     * @throws JredicException if some other err occur.
      */
     long ttl(String key);
 
@@ -196,10 +220,23 @@ public interface Jredic {
      * Like {@link #ttl(String)} this method returns the remaining time to live of a key
      * that has an expire set, with the sole difference that {@link #ttl(String)} returns
      * the amount of remaining time in seconds while {@link #pttl(String)} returns it in milliseconds.
+     * <p>
+     * In Redis 2.6 or older the command returns -1 if the key does not exist
+     * or if the key exist but has no associated expire.
+     * <p>
+     * Starting with Redis 2.8 the return value in case of error changed:
+     * <li>
+     *     The command returns -2 if the key does not exist.
+     * </li>
+     * <li>
+     *     The command returns -1 if the key exists but has no associated expire.
+     * </li>
      *
      * @param key the key to get TTL in milliseconds.
      * @return
      *      TTL in milliseconds, or a negative value in order to signal an error.
+     * @throws IllegalParameterException if key is blank.
+     * @throws JredicException if some other err occur.
      */
     long pttl(String key);
 
@@ -208,28 +245,29 @@ public interface Jredic {
      *
      * @return
      *      the random key, or null when the database is empty.
+     * @throws JredicException if some err occur.
      */
     String randomKey();
 
     /**
-     * Renames key to newkey. It throw an {@link JredicException} when key does not exist.
-     * If newkey already exists it is overwritten, when this happens RENAME executes
-     * an implicit DEL operation, so if the deleted key contains a very big value
-     * it may cause high latency even if RENAME itself is usually a constant-time operation.
+     * Renames key to newkey.
      *
      * @param key the key to rename.
      * @param newKey the new name.
+     * @throws IllegalParameterException if key is blank OR newKey is blank.
+     * @throws JredicException if key does not exist; if key and newKey are same(Before Redis 3.2.0);
      */
     void rename(String key, String newKey);
 
     /**
      * Renames key to newkey if newkey does not yet exist.
-     * It throw an {@link JredicException} when key does not exist.
      *
      * @param key the key to rename.
      * @param newKey the new name.
      * @return
      *      true if key was renamed to newKey;false if newKey already exists.
+     * @throws IllegalParameterException if key is blank OR newKey is blank.
+     * @throws JredicException if key does not exist; if key and newKey are same(Before Redis 3.2.0);
      */
     boolean renamenx(String key, String newKey);
 
@@ -241,8 +279,10 @@ public interface Jredic {
      * @param key the key to restore.
      * @param ttl expire time in milliseconds.
      * @param serializedValue serialized value associate to the key.
+     * @throws IllegalParameterException if key is blank OR serializedValue is empty.
+     * @throws JredicException if key already exists(Redis 3.0 or greater),or some other error occur.
      */
-    void restore(String key, int ttl, String serializedValue);
+    void restore(String key, int ttl, byte[] serializedValue);
 
     /**
      * Returns the type of the value stored at key.

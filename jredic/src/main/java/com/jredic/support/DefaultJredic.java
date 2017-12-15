@@ -1,17 +1,17 @@
 package com.jredic.support;
 
 import com.jredic.Jredic;
-import com.jredic.JredicException;
 import com.jredic.RedisDataType;
 import com.jredic.command.Command;
 import com.jredic.command.Commands;
 import com.jredic.command.KeyCommand;
 import com.jredic.command.StringCommand;
 import com.jredic.command.sub.BitOP;
-import com.jredic.network.protocol.DataTypeNotSupportException;
+import com.jredic.exception.DataTypeNotSupportException;
+import com.jredic.exception.JredicException;
 import com.jredic.network.client.Client;
 import com.jredic.network.protocol.data.*;
-import io.netty.util.CharsetUtil;
+import com.jredic.util.Checks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
@@ -33,22 +33,25 @@ public class DefaultJredic implements Jredic {
 
     @Override
     public long del(String... keys) {
+        Checks.checkArrayNotEmpty(keys, "the keys for 'del' is empty!");
         return process(KeyCommand.DEL, LONG_ACTION, keys);
     }
 
     @Override
     public boolean del(String key) {
+        Checks.checkNotBlank(key, "the key for 'del' is blank!");
         long number = process(KeyCommand.DEL, LONG_ACTION, key);
         return number != 0;
     }
 
     @Override
     public byte[] dump(String key) {
+        Checks.checkNotBlank(key, "the key for 'dump' is blank!");
         return process(KeyCommand.DUMP, new Action<byte[]>() {
             @Override
             public byte[] doAction(Data data) throws JredicException {
                 if(DataType.BULK_STRINGS.equals(data.getType())){
-                    return ((BulkStringsData) data).getContent().getBytes(CharsetUtil.UTF_8);
+                    return ((BulkStringsData) data).getContent();
                 }
                 throw ACTION_EXCEPTION;
             }
@@ -57,51 +60,68 @@ public class DefaultJredic implements Jredic {
 
     @Override
     public boolean exists(String key) {
+        Checks.checkNotBlank(key, "the key for 'exists' is blank!");
         return process(KeyCommand.EXISTS, BOOLEAN_ACTION, key);
     }
 
     @Override
+    public long exists(String firstKey, String... otherKeys) {
+        Checks.checkNotBlank(firstKey, "the firstKey for 'exists' is blank!");
+        Checks.checkArrayNotEmpty(otherKeys, "the otherKeys for 'exists' is empty!");
+        return process(KeyCommand.EXISTS, LONG_ACTION, packageParams(otherKeys, firstKey));
+    }
+
+    @Override
     public boolean expire(String key, int seconds) {
+        Checks.checkNotBlank(key, "the key for 'expire' is blank!");
         return process(KeyCommand.EXPIRE, BOOLEAN_ACTION, key, Integer.toString(seconds));
     }
 
     @Override
     public boolean expireAt(String key, long unixTimeInSeconds) {
+        Checks.checkNotBlank(key, "the key for 'expireAt' is blank!");
         return process(KeyCommand.EXPIREAT, BOOLEAN_ACTION, key, Long.toString(unixTimeInSeconds));
     }
 
     @Override
     public boolean pexpire(String key, long millis) {
+        Checks.checkNotBlank(key, "the key for 'pexpire' is blank!");
         return process(KeyCommand.PEXPIRE, BOOLEAN_ACTION, key, Long.toString(millis));
     }
 
     @Override
     public boolean pexpireAt(String key, long unixTimeInMillis) {
+        Checks.checkNotBlank(key, "the key for 'pexpireAt' is blank!");
         return process(KeyCommand.PEXPIREAT, BOOLEAN_ACTION, key, Long.toString(unixTimeInMillis));
     }
 
     @Override
     public List<String> keys(String pattern) {
+        Checks.checkNotBlank(pattern, "the pattern for 'keys' is blank!");
         return process(KeyCommand.KEYS, ARRAY_ACTION, pattern);
     }
 
     @Override
     public boolean move(String key, int dbIndex) {
+        Checks.checkNotBlank(key, "the key for 'move' is blank!");
         return process(KeyCommand.MOVE, BOOLEAN_ACTION, key, Integer.toString(dbIndex));
     }
 
     @Override
     public boolean persist(String key) {
+        Checks.checkNotBlank(key, "the key for 'persist' is blank!");
         return process(KeyCommand.PERSIST, BOOLEAN_ACTION, key);
     }
 
     @Override
     public long ttl(String key) {
+        Checks.checkNotBlank(key, "the key for 'ttl' is blank!");
         return process(KeyCommand.TTL, LONG_ACTION, key);
     }
 
     @Override
     public long pttl(String key) {
+        Checks.checkNotBlank(key, "the key for 'pttl' is blank!");
         return process(KeyCommand.PTTL, LONG_ACTION, key);
     }
 
@@ -112,17 +132,55 @@ public class DefaultJredic implements Jredic {
 
     @Override
     public void rename(String key, String newKey) {
+        Checks.checkNotBlank(key, "the key for 'rename' is blank!");
+        Checks.checkNotBlank(newKey, "the newKey for 'rename' is blank!");
         process(KeyCommand.RENAME, OK_ACTION, key, newKey);
     }
 
     @Override
     public boolean renamenx(String key, String newKey) {
+        Checks.checkNotBlank(key, "the key for 'renamenx' is blank!");
+        Checks.checkNotBlank(newKey, "the newKey for 'renamenx' is blank!");
         return process(KeyCommand.RENAMENX, BOOLEAN_ACTION, key, newKey);
     }
 
     @Override
-    public void restore(String key, int ttl, String serializedValue) {
-        process(KeyCommand.RESTORE, OK_ACTION, Integer.toString(ttl), serializedValue);
+    public void restore(String key, int ttl, byte[] serializedValue) {
+        /*
+         * we can't use process(...) here to avoid data loss when serializedValue turn to String.
+         */
+        List<Data> elements = new ArrayList<>(4);
+        elements.add(new BulkStringsData(KeyCommand.RESTORE.values()[0]));
+        elements.add(new BulkStringsData(key));
+        elements.add(new BulkStringsData(Integer.toString(ttl)));
+        elements.add(new BulkStringsData(serializedValue));
+        ArraysData request = new ArraysData(elements);
+        if(!client.isRunning()){
+            throw new JredicException("the client for network is stopped!");
+        }
+        Data response = client.send(request);
+        DataType dataType = response.getType();
+        try{
+            if(DataType.SIMPLE_STRINGS.equals(response.getType())){
+                SimpleStringsData simpleStringsData = (SimpleStringsData) response;
+                if("OK".equals(simpleStringsData.getContent())){
+                    return;
+                }else{
+                    throw new JredicException(simpleStringsData.getContent());
+                }
+            }
+            throw ACTION_EXCEPTION;
+        }catch (JredicException e){
+            if(ACTION_EXCEPTION == e){
+                if(DataType.ERRORS.equals(dataType)){
+                    throw new JredicException(((ErrorsData) response).getErrorMsg());
+                }else{
+                    throw new DataTypeNotSupportException(dataType, KeyCommand.RESTORE);
+                }
+            }else{
+                throw e;
+            }
+        }
     }
 
     @Override
@@ -163,6 +221,18 @@ public class DefaultJredic implements Jredic {
             args[index++] = srcKey;
         }
         return process(StringCommand.BITOP, LONG_ACTION, args);
+    }
+
+    private static String[] packageParams(String[] lastParams, String ... firstParams){
+        String[] params = new String[lastParams.length + firstParams.length];
+        int index = 0;
+        for(String param : firstParams){
+            params[index++] = param;
+        }
+        for(String param : lastParams){
+            params[index++] = param;
+        }
+        return params;
     }
 
 
@@ -228,7 +298,7 @@ public class DefaultJredic implements Jredic {
         @Override
         public String doAction(Data data) throws JredicException{
             if(DataType.BULK_STRINGS.equals(data.getType())){
-                return ((BulkStringsData) data).getContent();
+                return ((BulkStringsData) data).getStringContent();
             }
             throw ACTION_EXCEPTION;
         }
@@ -287,7 +357,7 @@ public class DefaultJredic implements Jredic {
                 }else{
                     List<String> keyList = new ArrayList<>(elements.size());
                     for(Data element : elements){
-                        keyList.add(((BulkStringsData)element).getContent());
+                        keyList.add(((BulkStringsData)element).getStringContent());
                     }
                     return keyList;
                 }

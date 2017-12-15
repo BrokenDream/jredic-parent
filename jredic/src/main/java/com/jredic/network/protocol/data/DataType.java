@@ -1,6 +1,6 @@
 package com.jredic.network.protocol.data;
 
-import com.jredic.network.protocol.RESPException;
+import com.jredic.exception.RESPException;
 
 /**
  * Data type defined in the <a href="https://redis.io/topics/protocol#resp-protocol-description">RESP</a>.

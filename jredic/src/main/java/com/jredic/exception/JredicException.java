@@ -1,4 +1,4 @@
-package com.jredic;
+package com.jredic.exception;
 
 /**
  * The exception for Jredic.

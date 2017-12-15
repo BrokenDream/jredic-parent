@@ -1,6 +1,6 @@
 package com.jredic.network.client.support;
 
-import com.jredic.JredicException;
+import com.jredic.exception.JredicException;
 import com.jredic.command.Commands;
 import com.jredic.command.ConnectionCommand;
 import com.jredic.command.ServerCommand;
@@ -186,7 +186,7 @@ public class DefaultClient implements Client {
         try{
             ArraysData request = Commands.createRequest(ServerCommand.INFO, Section.SERVER.value());
             BulkStringsData response = (BulkStringsData) send(request);
-            reader = new BufferedReader(new StringReader(response.getContent()));
+            reader = new BufferedReader(new StringReader(response.getStringContent()));
             ServerInfo info = new ServerInfo();
             String line;
             while ((line = reader.readLine()) != null){

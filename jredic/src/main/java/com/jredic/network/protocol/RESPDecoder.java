@@ -1,11 +1,12 @@
 package com.jredic.network.protocol;
 
+import com.jredic.exception.RESPException;
 import com.jredic.network.protocol.data.*;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.util.CharsetUtil;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -160,11 +161,10 @@ public class RESPDecoder extends ByteToMessageDecoder {
                     return null;
                 }
                 ByteBuf contentBytes = in.readSlice(bulkStringsHeader);
-                String content = contentBytes.toString(CharsetUtil.UTF_8);
                 //skip \r\n
                 in.skipBytes(RESPConstants.CRLF_LENGTH);
                 resetBulkStringsHeader();
-                BulkStringsData data = new BulkStringsData(content);
+                BulkStringsData data = new BulkStringsData(ByteBufUtil.getBytes(contentBytes));
                 return data;
             }
         }

@@ -2,7 +2,6 @@ package com.jredic.network.protocol;
 
 import com.jredic.network.protocol.data.*;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
@@ -81,19 +80,15 @@ public class RESPEncoder extends MessageToByteEncoder<Data> {
             //write CRLF
             out.writeShort(RESPConstants.CRLF);
         }else{
-            String content = data.getContent();
+            byte[] content = data.getContent();
             //write data length
-            ByteBufAllocator allocator = ctx.alloc();
-            int maxLength = ByteBufUtil.utf8MaxBytes(content);
-            ByteBuf buffer = allocator.ioBuffer(maxLength);
-            int dataLength = ByteBufUtil.writeUtf8(buffer, content);
+            int dataLength = content.length;
             out.writeBytes(CodecUtils.intToAsciiBytes(dataLength));
             //write CRLF
             out.writeShort(RESPConstants.CRLF);
-            out.writeBytes(buffer);
+            out.writeBytes(content);
             //write CRLF
             out.writeShort(RESPConstants.CRLF);
-            buffer.release();
         }
     }
 

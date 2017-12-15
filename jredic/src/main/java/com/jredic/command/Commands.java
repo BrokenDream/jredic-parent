@@ -3,7 +3,7 @@ package com.jredic.command;
 import com.jredic.network.protocol.data.ArraysData;
 import com.jredic.network.protocol.data.BulkStringsData;
 import com.jredic.network.protocol.data.Data;
-
+import com.jredic.util.Strings;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,10 +26,10 @@ public class Commands {
     public static ArraysData createRequest(Command cmd, String ... args){
         List<Data> elements = new ArrayList<>(cmd.values().length + args.length);
         for(String command : cmd.values()){
-            elements.add(new BulkStringsData(command));
+            elements.add(new BulkStringsData(Strings.decodeByUTF8(command)));
         }
         for(String arg : args){
-            elements.add(new BulkStringsData(arg));
+            elements.add(new BulkStringsData(Strings.decodeByUTF8(arg)));
         }
         return new ArraysData(elements);
     }

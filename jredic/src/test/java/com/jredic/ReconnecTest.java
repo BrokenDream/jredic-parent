@@ -11,7 +11,7 @@ public class ReconnecTest {
 
     public static void main(String[] args){
         DefaultJredic jredic = new DefaultJredic();
-        jredic.setClient(new DefaultClient("127.0.0.1", 6379, false));
+        jredic.setClient(new DefaultClient("127.0.0.1", 6379, 2));
         jredic.init();
         for(int i=0;i<500;i++){
             try {

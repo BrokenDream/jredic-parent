@@ -1,6 +1,4 @@
-package com.jredic.network.protocol;
-
-import com.jredic.JredicException;
+package com.jredic.exception;
 
 /**
  * Exception for RESP.

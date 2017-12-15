@@ -14,7 +14,7 @@ public class OpsTestBase {
 
     @BeforeClass
     public static void init(){
-        jredic.setClient(new DefaultClient("127.0.0.1", 6379));
+        jredic.setClient(new DefaultClient("127.0.0.1", 6379, false));
         jredic.init();
     }
 
