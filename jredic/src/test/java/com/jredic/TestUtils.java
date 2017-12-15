@@ -1,4 +1,4 @@
-package com.jredic.network.protocol;
+package com.jredic;
 
 import io.netty.buffer.ByteBuf;
 
@@ -15,6 +15,10 @@ public class TestUtils {
         byte[] bytes = new byte[byteBuf.readableBytes()];
         byteBuf.readBytes(bytes);
         return new String(bytes, Charset.forName("utf-8"));
+    }
+
+    public static long getUnixTime(){
+        return System.currentTimeMillis() / 1000;
     }
 
 }

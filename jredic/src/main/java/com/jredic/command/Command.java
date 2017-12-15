@@ -18,15 +18,11 @@ public interface Command {
     String[] values();
 
     /**
-     * <b>svv</b> is short for 'Start Version Value',
-     * the 'Start Version' is the Begin Version contains current command.
-     * the 'ssv' is a int value that represents the 'Start Version'.
-     * if the 'Start Version' is '2.8.13', then the 'ssv' is 20813.
-     * it's convenient to to comparing.
+     * The Start Version is the Begin Version contains current command.
      *
      * @return
-     *     the int value represents the 'Start Version'.
+     *     the start version.
      */
-    long svv();
+    String startVersion();
 
 }

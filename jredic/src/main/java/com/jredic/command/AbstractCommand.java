@@ -10,12 +10,11 @@ public abstract class AbstractCommand implements Command {
     //the string commands.
     private String[] values;
 
-    //the start version value.
-    private long svv;
+    //the start version.
+    private String startVersion;
 
     protected AbstractCommand(String[] values, String startVersion) {
         this.values = values;
-        this.svv = Commands.getValueFromStartVersion(startVersion);
     }
 
     @Override
@@ -24,8 +23,8 @@ public abstract class AbstractCommand implements Command {
     }
 
     @Override
-    public long svv() {
-        return svv;
+    public String startVersion() {
+        return startVersion;
     }
 
 }

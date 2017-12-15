@@ -7,13 +7,13 @@ import com.jredic.command.Command;
 import com.jredic.command.Commands;
 import com.jredic.command.KeyCommand;
 import com.jredic.command.StringCommand;
+import com.jredic.command.sub.BitOP;
 import com.jredic.network.protocol.DataTypeNotSupportException;
 import com.jredic.network.client.Client;
 import com.jredic.network.protocol.data.*;
 import io.netty.util.CharsetUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -151,6 +151,18 @@ public class DefaultJredic implements Jredic {
     @Override
     public long bitCount(String key, int start, int end) {
         return process(StringCommand.BITCOUNT, LONG_ACTION, key, Integer.toString(start), Integer.toString(end));
+    }
+
+    @Override
+    public long bitOp(BitOP op, String destKey, String ... srcKeys) {
+        String[] args = new String[srcKeys.length + 2];
+        int index = 0;
+        args[index++] = op.name();
+        args[index++] = destKey;
+        for(String srcKey : srcKeys){
+            args[index++] = srcKey;
+        }
+        return process(StringCommand.BITOP, LONG_ACTION, args);
     }
 
 
@@ -332,4 +344,10 @@ public class DefaultJredic implements Jredic {
 
     }
 
+    @Override
+    public String toString() {
+        return "DefaultJredic{" +
+                "client=" + client +
+                '}';
+    }
 }

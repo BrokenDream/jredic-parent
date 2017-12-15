@@ -1,5 +1,7 @@
 package com.jredic;
 
+import com.jredic.command.sub.BitOP;
+
 import java.util.List;
 
 /**
@@ -288,6 +290,27 @@ public interface Jredic {
      *      The number of bits set to 1.
      */
     long bitCount(String key, int start, int end);
+
+    /**
+     * Perform a bitwise operation between multiple keys (containing string values)
+     * and store the result in the destination key.
+     *
+     * <p>
+     * <b>Handling of strings with different lengths</b>
+     * When an operation is performed between strings having different lengths,
+     * all the strings shorter than the longest string in the set are treated
+     * as if they were zero-padded up to the length of the longest string.
+     * The same holds true for non-existent keys, that are considered
+     * as a stream of zero bytes up to the length of the longest string.
+     *
+     * @param op the operation see {@link BitOP}
+     * @param destKey the dest key to store result.
+     * @param srcKeys the src keys to operate.
+     * @return
+     *      The size of the string stored in the destination key,
+     *      that is equal to the size of the longest input string.
+     */
+    long bitOp(BitOP op, String destKey, String ... srcKeys);
 
     void set(String key, String value);
 

@@ -1,5 +1,6 @@
 package com.jredic.network.protocol;
 
+import com.jredic.TestUtils;
 import com.jredic.network.protocol.data.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;

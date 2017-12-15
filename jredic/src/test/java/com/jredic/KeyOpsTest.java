@@ -2,6 +2,8 @@ package com.jredic;
 
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -59,6 +61,67 @@ public class KeyOpsTest extends OpsTestBase {
             e.printStackTrace();
         }
         Assert.assertEquals(null, jredic.get(key));
+    }
+
+    @Test
+    public void testExpireAt(){
+        String key = "expireAtKey";
+        String value = "dumy";
+        jredic.set(key, value);
+        Assert.assertEquals(value, jredic.get(key));
+        jredic.expireAt(key, TestUtils.getUnixTime() + 1);
+        try {
+            TimeUnit.MILLISECONDS.sleep(1005);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        Assert.assertEquals(null, jredic.get(key));
+    }
+
+    @Test
+    public void testPexpire(){
+        String key = "pexpireKey";
+        String value = "dumy";
+        jredic.set(key, value);
+        Assert.assertEquals(value, jredic.get(key));
+        jredic.pexpire(key, 1000);
+        try {
+            TimeUnit.MILLISECONDS.sleep(1005);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        Assert.assertEquals(null, jredic.get(key));
+    }
+
+    @Test
+    public void testPexpireAt(){
+        String key = "pexpireAtKey";
+        String value = "dumy";
+        jredic.set(key, value);
+        Assert.assertEquals(value, jredic.get(key));
+        jredic.pexpireAt(key, System.currentTimeMillis() + 1000);
+        try {
+            TimeUnit.MILLISECONDS.sleep(1005);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        Assert.assertEquals(null, jredic.get(key));
+    }
+
+    @Test
+    public void testKeys(){
+        String key1 = "pk1";
+        String key2 = "pk2";
+        String key3 = "pk3";
+        String value = "dumy";
+        jredic.set(key1, value);
+        jredic.set(key2, value);
+        jredic.set(key3, value);
+        List<String> keys = jredic.keys("pk*");
+        Assert.assertTrue(keys != null && keys.size() >= 3);
+        Assert.assertTrue(keys.contains(key1));
+        Assert.assertTrue(keys.contains(key2));
+        Assert.assertTrue(keys.contains(key3));
     }
 
 }
