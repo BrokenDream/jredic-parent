@@ -48,6 +48,12 @@ public class Checks {
         }
     }
 
+    /**
+     * check if the given condition is true.
+     *
+     * @param condition the condition to check.
+     * @param expression if condition is false, expression will show as a error message.
+     */
     public static void checkTrue(boolean condition, String expression){
         if(!condition){
             throw new IllegalParameterException(expression);
