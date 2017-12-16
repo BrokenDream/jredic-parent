@@ -1,6 +1,7 @@
 package com.jredic;
 
 import com.jredic.command.sub.BitOP;
+import com.jredic.command.sub.SortOptionBuilder;
 import com.jredic.exception.JredicException;
 import com.jredic.exception.IllegalParameterException;
 
@@ -285,12 +286,43 @@ public interface Jredic {
     void restore(String key, int ttl, byte[] serializedValue);
 
     /**
+     * Sort the elements contained in the list, set or sorted set at key.
+     * <p>
+     * This method doesn't sort the original data, just return the sorted data.
+     *
+     * @param key the key to sort.
+     * @param optionBuilder the builder for sort options.
+     * @return
+     *      the elements after sorting.
+     * @throws IllegalParameterException if key is blank OR optionBuilder is null.
+     * @throws JredicException if some other err occur.
+     */
+    List<String> sort(String key, SortOptionBuilder optionBuilder);
+
+    /**
+     * Sort the elements contained in the list, set or sorted set at key.
+     * <p>
+     * This method doesn't sort the original data, just return the sorted data.
+     *
+     * @param key the key to sort.
+     * @param optionBuilder the builder for sort options.
+     * @param destKey the dest key to store sorted elements.
+     * @return
+     *      the number of sorted elements in the destination list.
+     * @throws IllegalParameterException if key is blank OR optionBuilder is null OR destKey is blank.
+     * @throws JredicException if some other err occur.
+     */
+    long sortAndStore(String key, SortOptionBuilder optionBuilder, String destKey);
+
+    /**
      * Returns the type of the value stored at key.
      * @see RedisDataType
      *
      * @param key the key to get type.
      * @return
      *      the type of value at key;null if key does not exist.
+     * @throws IllegalParameterException if key is blank.
+     * @throws JredicException if some other err occur.
      */
     RedisDataType type(String key);
 

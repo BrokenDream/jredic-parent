@@ -7,6 +7,7 @@ import com.jredic.command.Commands;
 import com.jredic.command.KeyCommand;
 import com.jredic.command.StringCommand;
 import com.jredic.command.sub.BitOP;
+import com.jredic.command.sub.SortOptionBuilder;
 import com.jredic.exception.DataTypeNotSupportException;
 import com.jredic.exception.JredicException;
 import com.jredic.network.client.Client;
@@ -68,7 +69,7 @@ public class DefaultJredic implements Jredic {
     public long exists(String firstKey, String... otherKeys) {
         Checks.checkNotBlank(firstKey, "the firstKey for 'exists' is blank!");
         Checks.checkArrayNotEmpty(otherKeys, "the otherKeys for 'exists' is empty!");
-        return process(KeyCommand.EXISTS, LONG_ACTION, packageParams(otherKeys, firstKey));
+        return process(KeyCommand.EXISTS_MU, LONG_ACTION, packageParams(otherKeys, firstKey));
     }
 
     @Override
@@ -146,6 +147,8 @@ public class DefaultJredic implements Jredic {
 
     @Override
     public void restore(String key, int ttl, byte[] serializedValue) {
+        Checks.checkNotBlank(key, "the key for 'restore' is blank!");
+        Checks.checkTrue(serializedValue != null && serializedValue.length > 0, "the serializedValue for 'restore' is empty!");
         /*
          * we can't use process(...) here to avoid data loss when serializedValue turn to String.
          */
@@ -184,7 +187,26 @@ public class DefaultJredic implements Jredic {
     }
 
     @Override
+    public List<String> sort(String key, SortOptionBuilder optionBuilder) {
+        Checks.checkNotBlank(key, "the key for 'sort' is blank!");
+        Checks.checkNotNull(optionBuilder, "the optionBuilder for 'sort' is null!");
+        return process(KeyCommand.SORT, ARRAY_ACTION, packageParams(optionBuilder.build().toArray(new String[]{}), key));
+    }
+
+    @Override
+    public long sortAndStore(String key, SortOptionBuilder optionBuilder, String destKey) {
+        Checks.checkNotBlank(key, "the key for 'sortAndStore' is blank!");
+        Checks.checkNotNull(optionBuilder, "the optionBuilder for 'sortAndStore' is null!");
+        Checks.checkNotBlank(destKey, "the destKey for 'sortAndStore' is blank!");
+        List<String> options = optionBuilder.build();
+        options.add(SortOptionBuilder.OPTION_STORE);
+        options.add(destKey);
+        return process(KeyCommand.SORT, LONG_ACTION, packageParams(options.toArray(new String[]{}), key));
+    }
+
+    @Override
     public RedisDataType type(String key) {
+        Checks.checkNotBlank(key, "the key for 'type' is blank!");
         return process(KeyCommand.TYPE, new Action<RedisDataType>() {
             @Override
             public RedisDataType doAction(Data data) throws JredicException {
