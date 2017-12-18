@@ -6,6 +6,7 @@ import com.jredic.command.Command;
 import com.jredic.command.Commands;
 import com.jredic.command.KeyCommand;
 import com.jredic.command.StringCommand;
+import com.jredic.command.sub.Bit;
 import com.jredic.command.sub.BitOP;
 import com.jredic.command.sub.SortOptionBuilder;
 import com.jredic.exception.DataTypeNotSupportException;
@@ -220,21 +221,28 @@ public class DefaultJredic implements Jredic {
 
     @Override
     public long append(String key, String value) {
+        Checks.checkNotBlank(key, "the key for 'append' is blank!");
+        Checks.checkNotBlank(value, "the value for 'append' is blank!");
         return process(StringCommand.APPEND, LONG_ACTION, key, value);
     }
 
     @Override
     public long bitCount(String key) {
+        Checks.checkNotBlank(key, "the key for 'bitCount' is blank!");
         return process(StringCommand.BITCOUNT, LONG_ACTION, key);
     }
 
     @Override
     public long bitCount(String key, int start, int end) {
+        Checks.checkNotBlank(key, "the key for 'bitCount' is blank!");
         return process(StringCommand.BITCOUNT, LONG_ACTION, key, Integer.toString(start), Integer.toString(end));
     }
 
     @Override
     public long bitOp(BitOP op, String destKey, String ... srcKeys) {
+        Checks.checkNotNull(op, "the op for 'bitOp' is null!");
+        Checks.checkNotBlank(destKey, "the destKey for 'bitOp' is blank!");
+        Checks.checkArrayNotEmpty(srcKeys, "the srcKeys for 'bitOp' is empty!");
         String[] args = new String[srcKeys.length + 2];
         int index = 0;
         args[index++] = op.name();
@@ -245,6 +253,32 @@ public class DefaultJredic implements Jredic {
         return process(StringCommand.BITOP, LONG_ACTION, args);
     }
 
+    @Override
+    public long bitPos(String key, Bit bit) {
+        Checks.checkNotBlank(key, "the key for 'bitPos' is blank!");
+        Checks.checkNotNull(key, "the bit for 'bitPos' is null!");
+        return process(StringCommand.BITPOS, LONG_ACTION, key, Integer.toString(bit.value()));
+    }
+
+    @Override
+    public long bitPos(String key, Bit bit, int start) {
+        Checks.checkNotBlank(key, "the key for 'bitPos' is blank!");
+        Checks.checkNotNull(key, "the bit for 'bitPos' is null!");
+        return process(StringCommand.BITPOS, LONG_ACTION, key, Integer.toString(bit.value()), Integer.toString(start));
+    }
+
+    @Override
+    public long bitPos(String key, Bit bit, int start, int end) {
+        Checks.checkNotBlank(key, "the key for 'bitPos' is blank!");
+        Checks.checkNotNull(key, "the bit for 'bitPos' is null!");
+        return process(StringCommand.BITPOS, LONG_ACTION, key, Integer.toString(bit.value()), Integer.toString(start), Integer.toString(end));
+    }
+
+    /*
+     * the last arg in method process(...) is 'String ... args',
+     * and in some case, our read args is like 'String k1, String[] ks',
+     * so we need this method to do some adaptation.
+     */
     private static String[] packageParams(String[] lastParams, String ... firstParams){
         String[] params = new String[lastParams.length + firstParams.length];
         int index = 0;
@@ -260,14 +294,16 @@ public class DefaultJredic implements Jredic {
 
     //common process
     private <R> R process(Command cmd, Action<R> action, String ... args){
-
+        //create the request with cmd and args.
         ArraysData request = Commands.createRequest(cmd, args);
+        //test if client is running here!
         if(!client.isRunning()){
             throw new JredicException("the client for network is stopped!");
         }
         Data response = client.send(request);
         DataType dataType = response.getType();
         try{
+            //do callback
             return action.doAction(response);
         }catch (JredicException e){
             if(ACTION_EXCEPTION == e){
@@ -283,12 +319,20 @@ public class DefaultJredic implements Jredic {
 
     }
 
+    /**
+     * The CallBack Interface to dealing Redis Response Data.
+     *
+     * @param <R>
+     */
     private interface Action<R>{
 
         R doAction(Data data) throws JredicException;
 
     }
 
+    /*
+     * some common callback implementations.
+     */
     private static final Action<Boolean> BOOLEAN_ACTION = new BooleanAction();
     private static final Action<Long> LONG_ACTION = new LongAction();
     private static final Action<String> STRING_ACTION = new StringAction();
@@ -346,6 +390,26 @@ public class DefaultJredic implements Jredic {
 
     }
 
+    /*
+     * Some command return 'OK' like SET,
+     * and if we pass it to the user, it will be like this:
+     *
+     * if("OK".equals(jredic.set("mykey","myvalue"))){
+     *      //do some thing...
+     * }else{
+     *      //throws exception
+     * }
+     *
+     * i don't think it's a good iead.
+     * i prefer to difine the SET method like this:
+     *
+     * public void set(String key, String value);
+     *
+     * when user using this method, they just do this:
+     * jredic.set("mykey", myvalue);
+     *
+     * and if something err occur, just catch it.
+     */
     private static class OkAction implements Action<String>{
 
         private static final String OK = "OK";

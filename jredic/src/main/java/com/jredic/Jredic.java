@@ -1,5 +1,6 @@
 package com.jredic;
 
+import com.jredic.command.sub.Bit;
 import com.jredic.command.sub.BitOP;
 import com.jredic.command.sub.SortOptionBuilder;
 import com.jredic.exception.JredicException;
@@ -340,6 +341,8 @@ public interface Jredic {
      * @param value appended value.
      * @return
      *      the length of the string after the append.
+     * @throws IllegalParameterException if key is blank OR value is blank.
+     * @throws JredicException if some other err occur.
      */
     long append(String key, String value);
 
@@ -349,6 +352,8 @@ public interface Jredic {
      * @param key the key to count bit.
      * @return
      *      The number of bits set to 1.
+     * @throws IllegalParameterException if key is blank.
+     * @throws JredicException if some other err occur.
      */
     long bitCount(String key);
 
@@ -360,12 +365,17 @@ public interface Jredic {
      * @param end end index.
      * @return
      *      The number of bits set to 1.
+     * @throws IllegalParameterException if key is blank.
+     * @throws JredicException if some other err occur.
      */
     long bitCount(String key, int start, int end);
 
     /**
      * Perform a bitwise operation between multiple keys (containing string values)
      * and store the result in the destination key.
+     *
+     * <p>
+     * Note if op is {@link BitOP#NOT}, this method will only take one srcKeys.
      *
      * <p>
      * <b>Handling of strings with different lengths</b>
@@ -381,8 +391,61 @@ public interface Jredic {
      * @return
      *      The size of the string stored in the destination key,
      *      that is equal to the size of the longest input string.
+     * @throws IllegalParameterException if op is null OR destKey is blank OR srcKeys is empty.
+     * @throws JredicException if some other err occur.
      */
     long bitOp(BitOP op, String destKey, String ... srcKeys);
+
+    /**
+     * Return the position of the first bit set to 1 or 0 in a string.
+     * <p>
+     * The position is returned, thinking of the string as an array of bits from left to right,
+     * where the first byte's most significant bit is at position 0,
+     * the second byte's most significant bit is at position 8, and so forth.
+     *
+     * @param key the key to get position of 0 or 1.
+     * @param bit set(1) or clear(0), see {@link Bit}.
+     * @return
+     *      the position of the first bit set to 1 or 0 according to the request.
+     * @throws IllegalParameterException if key is blank OR bit is null.
+     * @throws JredicException if some other err occur.
+     */
+    long bitPos(String key, Bit bit);
+
+    /**
+     * Return the position of the first bit set to 1 or 0 in a string.
+     * <p>
+     * The position is returned, thinking of the string as an array of bits from left to right,
+     * where the first byte's most significant bit is at position 0,
+     * the second byte's most significant bit is at position 8, and so forth.
+     *
+     * @param key the key to get position of 0 or 1.
+     * @param bit set(1) or clear(0), see {@link Bit}.
+     * @param start the start index (in byte).
+     * @return
+     *      the position of the first bit set to 1 or 0 according to the request.
+     * @throws IllegalParameterException if key is blank OR bit is null.
+     * @throws JredicException if some other err occur.
+     */
+    long bitPos(String key, Bit bit, int start);
+
+    /**
+     * Return the position of the first bit set to 1 or 0 in a string.
+     * <p>
+     * The position is returned, thinking of the string as an array of bits from left to right,
+     * where the first byte's most significant bit is at position 0,
+     * the second byte's most significant bit is at position 8, and so forth.
+     *
+     * @param key the key to get position of 0 or 1.
+     * @param bit set(1) or clear(0), see {@link Bit}.
+     * @param start the start index (in byte).
+     * @param end the end index (in byte).
+     * @return
+     *      the position of the first bit set to 1 or 0 according to the request.
+     * @throws IllegalParameterException if key is blank OR bit is null.
+     * @throws JredicException if some other err occur.
+     */
+    long bitPos(String key, Bit bit, int start, int end);
 
     void set(String key, String value);
 
