@@ -1,14 +1,13 @@
 package com.jredic.support;
 
 import com.jredic.Jredic;
+import com.jredic.Pair;
 import com.jredic.RedisDataType;
 import com.jredic.command.Command;
 import com.jredic.command.Commands;
 import com.jredic.command.KeyCommand;
 import com.jredic.command.StringCommand;
-import com.jredic.command.sub.Bit;
-import com.jredic.command.sub.BitOP;
-import com.jredic.command.sub.SortOptionBuilder;
+import com.jredic.command.sub.*;
 import com.jredic.exception.DataTypeNotSupportException;
 import com.jredic.exception.JredicException;
 import com.jredic.network.client.Client;
@@ -167,7 +166,7 @@ public class DefaultJredic implements Jredic {
         try{
             if(DataType.SIMPLE_STRINGS.equals(response.getType())){
                 SimpleStringsData simpleStringsData = (SimpleStringsData) response;
-                if("OK".equals(simpleStringsData.getContent())){
+                if(SIMPLE_DATA_SUCCESS.equals(simpleStringsData.getContent())){
                     return;
                 }else{
                     throw new JredicException(simpleStringsData.getContent());
@@ -274,6 +273,211 @@ public class DefaultJredic implements Jredic {
         return process(StringCommand.BITPOS, LONG_ACTION, key, Integer.toString(bit.value()), Integer.toString(start), Integer.toString(end));
     }
 
+    @Override
+    public long decr(String key) {
+        Checks.checkNotBlank(key, "the key for 'decr' is blank!");
+        return process(StringCommand.DECR, LONG_ACTION, key);
+    }
+
+    @Override
+    public long decrBy(String key, long decrement) {
+        Checks.checkNotBlank(key, "the key for 'decrBy' is blank!");
+        return process(StringCommand.DECRBY, LONG_ACTION, key, Long.toString(decrement));
+    }
+
+    @Override
+    public String get(String key) {
+        Checks.checkNotBlank(key, "the key for 'get' is blank!");
+        return process(StringCommand.GET, STRING_ACTION, key);
+    }
+
+    @Override
+    public long getBit(String key, int offset) {
+        Checks.checkNotBlank(key, "the key for 'getBit' is blank!");
+        Checks.checkTrue(offset >= 0, "the offset of 'getBit' is negative!");
+        return process(StringCommand.GETBIT, LONG_ACTION, key, Integer.toString(offset));
+    }
+
+    @Override
+    public String getRange(String key, int start, int end) {
+        Checks.checkNotBlank(key, "the key for 'getRange' is blank!");
+        return process(StringCommand.GETRANGE, STRING_ACTION, key, Integer.toString(start), Integer.toString(end));
+    }
+
+    @Override
+    public String getSet(String key, String value) {
+        Checks.checkNotBlank(key, "the key for 'getSet' is blank!");
+        Checks.checkNotBlank(value, "the value for 'getSet' is blank!");
+        return process(StringCommand.GETSET, STRING_ACTION, key, value);
+    }
+
+    @Override
+    public long incr(String key) {
+        Checks.checkNotBlank(key, "the key for 'incr' is blank!");
+        return process(StringCommand.INCR, LONG_ACTION, key);
+    }
+
+    @Override
+    public long incrBy(String key, long increment) {
+        Checks.checkNotBlank(key, "the key for 'incrBy' is blank!");
+        return process(StringCommand.INCRBY, LONG_ACTION, key);
+    }
+
+    @Override
+    public double incrByFloat(String key, double increment) {
+        Checks.checkNotBlank(key, "the key for 'incrByFloat' is blank!");
+        String value = process(StringCommand.INCRBYFLOAT, STRING_ACTION, key, Double.toString(increment));
+        return Double.parseDouble(value);
+    }
+
+    @Override
+    public List<String> mget(String... keys) {
+        Checks.checkArrayNotEmpty(keys, "the keys for 'mget' is empty!");
+        return process(StringCommand.MGET, ARRAY_ACTION, keys);
+    }
+
+    @Override
+    public void mset(Pair... pairs) {
+        Checks.checkTrue(pairs != null && pairs.length > 0, "the keys for 'mset' is empty!");
+        String[] params = new String[pairs.length * 2];
+        int index = 0;
+        for(Pair pair : pairs){
+            params[index++] = pair.getKey();
+            params[index++] = pair.getValue();
+        }
+        process(StringCommand.MSET, OK_ACTION, params);
+    }
+
+    @Override
+    public boolean msetnx(Pair... pairs) {
+        Checks.checkTrue(pairs != null && pairs.length > 0, "the pairs for 'msetnx' is empty!");
+        String[] params = new String[pairs.length * 2];
+        int index = 0;
+        for(Pair pair : pairs){
+            params[index++] = pair.getKey();
+            params[index++] = pair.getValue();
+        }
+        return process(StringCommand.MSETNX, BOOLEAN_ACTION, params);
+    }
+
+    @Override
+    public void psetex(String key, long millis, String value) {
+        Checks.checkNotBlank(key, "the key for 'psetex' is blank!");
+        Checks.checkNotBlank(value, "the value for 'psetex' is blank!");
+        process(StringCommand.PSETEX, OK_ACTION, key, Long.toString(millis), value);
+    }
+
+    @Override
+    public void set(String key, String value) {
+        Checks.checkNotBlank(key, "the key for 'set' is blank!");
+        Checks.checkNotBlank(value, "the value for 'set' is blank!");
+        process(StringCommand.SET, OK_ACTION, key, value);
+    }
+
+    @Override
+    public void set(String key, String value, SetOptionBuilder optionBuilder) {
+        set(key, value, optionBuilder, null);
+    }
+
+    @Override
+    public void set(String key, String value, SetOptionBuilder optionBuilder, final ConditionMeetListener meetListener) {
+        Checks.checkNotBlank(key, "the key for 'set' is blank!");
+        Checks.checkNotBlank(value, "the value for 'set' is blank!");
+        Checks.checkNotNull(optionBuilder, "the optionBuilder for 'set' is null!");
+        process(KeyCommand.SORT, new Action<Void>() {
+            /*
+             * if the options nx/xx not met, it will return null.
+             */
+            @Override
+            public Void doAction(Data data) throws JredicException {
+                if(DataType.SIMPLE_STRINGS.equals(data.getType())){
+                    SimpleStringsData simpleStringsData = (SimpleStringsData) data;
+                    if(SIMPLE_DATA_SUCCESS.equals(simpleStringsData.getContent())){
+                        if(meetListener != null){
+                            meetListener.onMeet(true);
+                        }
+                        return null;
+                    }else{
+                        if(simpleStringsData.getContent() == null){
+                            if(meetListener != null){
+                                meetListener.onMeet(false);
+                            }
+                            return null;
+                        }
+                        throw new JredicException(simpleStringsData.getContent());
+                    }
+                }
+                throw ACTION_EXCEPTION;
+            }
+        }, packageParams(optionBuilder.build().toArray(new String[]{}), key));
+    }
+
+    @Override
+    public long setBit(String key, int offset, String value) {
+        //FIXME
+        return 0;
+    }
+
+    @Override
+    public void setex(String key, int seconds, String value) {
+        Checks.checkNotBlank(key, "the key for 'setex' is blank!");
+        Checks.checkNotBlank(value, "the value for 'setex' is blank!");
+        process(StringCommand.SETEX, OK_ACTION, key, Integer.toString(seconds), value);
+    }
+
+    @Override
+    public long setRange(String key, int offset, String value) {
+        //FIXME
+        return 0;
+    }
+
+    @Override
+    public long strLen(String key) {
+        Checks.checkNotBlank(key, "the key for 'strLen' is blank!");
+        return process(StringCommand.STRLEN, LONG_ACTION, key);
+    }
+
+    public void setClient(Client client) {
+        this.client = client;
+    }
+
+    /**
+     * init resources.
+     *
+     * @throws JredicException
+     */
+    public void init() throws JredicException{
+
+        try{
+            this.client.start();
+        } catch (Exception e){
+            throw new JredicException("DefaultJredic init failed!", e);
+        }
+
+    }
+
+    /**
+     * destroy resources.
+     *
+     * @throws JredicException
+     */
+    public void destroy() throws JredicException{
+
+        try{
+            this.client.stop();
+        } catch (Exception e){
+            throw new JredicException("DefaultJredic destroy failed!", e);
+        }
+
+    }
+
+    @Override
+    public String toString() {
+        return "DefaultJredic{" +
+                "client=" + client +
+                '}';
+    }
+
     /*
      * the last arg in method process(...) is 'String ... args',
      * and in some case, our read args is like 'String k1, String[] ks',
@@ -337,7 +541,7 @@ public class DefaultJredic implements Jredic {
     private static final Action<Long> LONG_ACTION = new LongAction();
     private static final Action<String> STRING_ACTION = new StringAction();
     private static final Action<List<String>> ARRAY_ACTION = new ArrayAction();
-    private static final Action<String> OK_ACTION = new OkAction();
+    private static final Action<Void> OK_ACTION = new OkAction();
 
     private static final JredicException ACTION_EXCEPTION = new JredicException();
 
@@ -390,6 +594,8 @@ public class DefaultJredic implements Jredic {
 
     }
 
+    private static final String SIMPLE_DATA_SUCCESS = "OK";
+
     /*
      * Some command return 'OK' like SET,
      * and if we pass it to the user, it will be like this:
@@ -410,16 +616,14 @@ public class DefaultJredic implements Jredic {
      *
      * and if something err occur, just catch it.
      */
-    private static class OkAction implements Action<String>{
-
-        private static final String OK = "OK";
+    private static class OkAction implements Action<Void>{
 
         @Override
-        public String doAction(Data data) throws JredicException{
+        public Void doAction(Data data) throws JredicException{
             if(DataType.SIMPLE_STRINGS.equals(data.getType())){
                 SimpleStringsData simpleStringsData = (SimpleStringsData) data;
-                if(OK.equals(simpleStringsData.getContent())){
-                    return OK;
+                if(SIMPLE_DATA_SUCCESS.equals(simpleStringsData.getContent())){
+                    return null;
                 }else{
                     throw new JredicException(simpleStringsData.getContent());
                 }
@@ -454,56 +658,4 @@ public class DefaultJredic implements Jredic {
     }
 
 
-
-    @Override
-    public void set(String key, String value) {
-        process(StringCommand.SET, OK_ACTION, key, value);
-    }
-
-    @Override
-    public String get(String key) {
-        return process(StringCommand.GET, STRING_ACTION, key);
-    }
-
-
-    public void setClient(Client client) {
-        this.client = client;
-    }
-
-    /**
-     * init resources.
-     *
-     * @throws JredicException
-     */
-    public void init() throws JredicException{
-
-        try{
-            this.client.start();
-        } catch (Exception e){
-            throw new JredicException("DefaultJredic init failed!", e);
-        }
-
-    }
-
-    /**
-     * destroy resources.
-     *
-     * @throws JredicException
-     */
-    public void destroy() throws JredicException{
-
-        try{
-            this.client.stop();
-        } catch (Exception e){
-            throw new JredicException("DefaultJredic destroy failed!", e);
-        }
-
-    }
-
-    @Override
-    public String toString() {
-        return "DefaultJredic{" +
-                "client=" + client +
-                '}';
-    }
 }

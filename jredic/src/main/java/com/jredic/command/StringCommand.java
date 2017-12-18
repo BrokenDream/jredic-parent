@@ -27,6 +27,10 @@ public class StringCommand extends AbstractCommand{
     public static final StringCommand MSETNX      = new StringCommand(new String[]{"MSETNX"},      "1.0.1");
     public static final StringCommand PSETEX      = new StringCommand(new String[]{"PSETEX"},      "2.6.0");
     public static final StringCommand SET         = new StringCommand(new String[]{"SET"},         "1.0.0");
+    /*
+     * Starting with Redis 2.6.12 SET supports a set of options.
+     */
+    public static final StringCommand SET_OPTIONS = new StringCommand(new String[]{"SET"},         "2.6.12");
     public static final StringCommand SETBIT      = new StringCommand(new String[]{"SETBIT"},      "2.2.0");
     public static final StringCommand SETEX       = new StringCommand(new String[]{"SETEX"},       "2.0.0");
     public static final StringCommand SETNX       = new StringCommand(new String[]{"SETNX"},       "1.0.0");
