@@ -675,7 +675,18 @@ public interface Jredic {
      */
     void set(String key, String value, SetOptionBuilder optionBuilder, ConditionMeetListener meetListener);
 
-    long setBit(String key, int offset, String value);
+    /**
+     * Sets or clears the bit at offset in the string value stored at key.
+     *
+     * @param key the key to operate.
+     * @param offset the offset to set bit.
+     * @param bit the value (see {@link Bit}) to set.
+     * @return
+     *      the original bit value stored at offset.
+     * @throws IllegalParameterException if key is blank OR bit is null.
+     * @throws JredicException if some other err occur.
+     */
+    long setBit(String key, int offset, Bit bit);
 
     /**
      * Set key to hold the string value and set key to timeout after a given number of seconds.
@@ -688,6 +699,21 @@ public interface Jredic {
      */
     void setex(String key, int seconds, String value);
 
+    /**
+     * Overwrites part of the string stored at key, starting at the specified offset, for the entire length of value.
+     * If the offset is larger than the current length of the string at key,
+     * the string is padded with zero-bytes to make offset fit.
+     * Non-existing keys are considered as empty strings,
+     * so this command will make sure it holds a string large enough to be able to set value at offset.
+     *
+     * @param key the key to operate.
+     * @param offset the index to start set.
+     * @param value the value to set.
+     * @return
+     *      the length of the string after it was modified by this method.
+     * @throws IllegalParameterException if key is blank OR value is blank.
+     * @throws JredicException if some other err occur.
+     */
     long setRange(String key, int offset, String value);
 
     /**

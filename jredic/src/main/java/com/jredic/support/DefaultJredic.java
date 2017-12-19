@@ -413,9 +413,10 @@ public class DefaultJredic implements Jredic {
     }
 
     @Override
-    public long setBit(String key, int offset, String value) {
-        //FIXME
-        return 0;
+    public long setBit(String key, int offset, Bit bit) {
+        Checks.checkNotBlank(key, "the key for 'setBit' is blank!");
+        Checks.checkNotNull(bit, "the bit for 'setBit' is null!");
+        return process(StringCommand.SETBIT, LONG_ACTION, key, Integer.toString(offset), Integer.toString(bit.value()));
     }
 
     @Override
@@ -427,8 +428,9 @@ public class DefaultJredic implements Jredic {
 
     @Override
     public long setRange(String key, int offset, String value) {
-        //FIXME
-        return 0;
+        Checks.checkNotBlank(key, "the key for 'setRange' is blank!");
+        Checks.checkNotBlank(value, "the value for 'setRange' is blank!");
+        return process(StringCommand.SETRANGE, LONG_ACTION, key, Integer.toString(offset), value);
     }
 
     @Override
