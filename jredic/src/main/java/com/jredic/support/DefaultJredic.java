@@ -1,7 +1,6 @@
 package com.jredic.support;
 
 import com.jredic.Jredic;
-import com.jredic.Pair;
 import com.jredic.RedisDataType;
 import com.jredic.command.*;
 import com.jredic.command.sub.*;
@@ -11,11 +10,7 @@ import com.jredic.network.client.Client;
 import com.jredic.network.protocol.data.*;
 import com.jredic.util.Checks;
 import com.jredic.util.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * The default implementation for Jredic.
@@ -23,8 +18,6 @@ import java.util.List;
  * @author David.W
  */
 public class DefaultJredic implements Jredic {
-
-    private static final Logger logger = LoggerFactory.getLogger(DefaultJredic.class);
 
     /*
      * the client for network.
@@ -350,25 +343,25 @@ public class DefaultJredic implements Jredic {
     }
 
     @Override
-    public void mset(Pair... pairs) {
-        Checks.checkTrue(pairs != null && pairs.length > 0, "the keys for 'mset' is empty!");
-        String[] params = new String[pairs.length * 2];
+    public void mset(Map<String, String> pairs) {
+        Checks.checkTrue(pairs != null && pairs.size() > 0, "the keys for 'mset' is empty!");
+        String[] params = new String[pairs.size() * 2];
         int index = 0;
-        for(Pair pair : pairs){
-            params[index++] = pair.getKey();
-            params[index++] = pair.getValue();
+        for(String key : pairs.keySet()){
+            params[index++] = key;
+            params[index++] = pairs.get(key);
         }
         process(StringCommand.MSET, OK_ACTION, params);
     }
 
     @Override
-    public boolean msetnx(Pair... pairs) {
-        Checks.checkTrue(pairs != null && pairs.length > 0, "the pairs for 'msetnx' is empty!");
-        String[] params = new String[pairs.length * 2];
+    public boolean msetnx(Map<String, String> pairs) {
+        Checks.checkTrue(pairs != null && pairs.size() > 0, "the pairs for 'msetnx' is empty!");
+        String[] params = new String[pairs.size() * 2];
         int index = 0;
-        for(Pair pair : pairs){
-            params[index++] = pair.getKey();
-            params[index++] = pair.getValue();
+        for(String key : pairs.keySet()){
+            params[index++] = key;
+            params[index++] = pairs.get(key);
         }
         return process(StringCommand.MSETNX, BOOLEAN_ACTION, params);
     }
@@ -453,6 +446,110 @@ public class DefaultJredic implements Jredic {
     }
 
     @Override
+    public boolean hdel(String key, String field) {
+        Checks.checkNotBlank(key, "the key for 'hdel' is blank!");
+        Checks.checkNotBlank(field, "the field for 'hdel' is blank!");
+        return process(HashCommand.HDEL, BOOLEAN_ACTION, key, field);
+    }
+
+    @Override
+    public long hdel(String key, String... fields) {
+        Checks.checkNotBlank(key, "the key for 'hdel' is blank!");
+        Checks.checkArrayNotEmpty(fields, "the fields for 'hdel' is empty!");
+        return process(HashCommand.HDEL_MU, LONG_ACTION, packageParams(fields, key));
+    }
+
+    @Override
+    public boolean hexists(String key, String field) {
+        Checks.checkNotBlank(key, "the key for 'hexists' is blank!");
+        Checks.checkNotBlank(field, "the field for 'hexists' is blank!");
+        return process(HashCommand.HEXISTS, BOOLEAN_ACTION, key, field);
+    }
+
+    @Override
+    public Map<String, String> hgetAll(String key) {
+        Checks.checkNotBlank(key, "the key for 'hgetAll' is blank!");
+        return process(HashCommand.HGETALL, HASH_ACTION, key);
+    }
+
+    @Override
+    public long hincrBy(String key, String field, long increment) {
+        Checks.checkNotBlank(key, "the key for 'hincrBy' is blank!");
+        Checks.checkNotBlank(field, "the field for 'hincrBy' is blank!");
+        return process(HashCommand.HINCRBY, LONG_ACTION, key, field, Long.toString(increment));
+    }
+
+    @Override
+    public double hincrByFloat(String key, String field, double increment) {
+        Checks.checkNotBlank(key, "the key for 'hincrByFloat' is blank!");
+        Checks.checkNotBlank(field, "the field for 'hincrByFloat' is blank!");
+        String value = process(HashCommand.HINCRBY, STRING_ACTION, key, field, Double.toString(increment));
+        return Double.parseDouble(value);
+    }
+
+    @Override
+    public List<String> hkeys(String key) {
+        Checks.checkNotBlank(key, "the key for 'hkeys' is blank!");
+        return process(HashCommand.HKEYS, ARRAY_ACTION, key);
+    }
+
+    @Override
+    public long hlen(String key) {
+        Checks.checkNotBlank(key, "the key for 'hlen' is blank!");
+        return process(HashCommand.HLEN, LONG_ACTION, key);
+    }
+
+    @Override
+    public List<String> hmget(String key, String... fields) {
+        Checks.checkNotBlank(key, "the key for 'hmget' is blank!");
+        Checks.checkArrayNotEmpty(fields, "the fields for 'hmget' is empty!");
+        return process(HashCommand.HMGET, ARRAY_ACTION, packageParams(fields, key));
+    }
+
+    @Override
+    public void hmset(String key, Map<String, String> pairs) {
+        Checks.checkNotBlank(key, "the key for 'hmset' is blank!");
+        Checks.checkTrue(pairs != null && pairs.size() > 0, "the pairs for 'hmset' is empty!");
+        String[] params = new String[pairs.size() * 2 + 1];
+        int index = 0;
+        params[index++] = key;
+        for(String field : pairs.keySet()){
+            params[index++] = field;
+            params[index++] = pairs.get(field);
+        }
+        process(HashCommand.HMSET, OK_ACTION, params);
+    }
+
+    @Override
+    public boolean hset(String key, String field, String value) {
+        Checks.checkNotBlank(key, "the key for 'hset' is blank!");
+        Checks.checkNotBlank(field, "the field for 'hset' is blank!");
+        Checks.checkNotBlank(value, "the value for 'hset' is blank!");
+        return process(HashCommand.HSET, BOOLEAN_ACTION, key, field, value);
+    }
+
+    @Override
+    public boolean hsetnx(String key, String field, String value) {
+        Checks.checkNotBlank(key, "the key for 'hsetnx' is blank!");
+        Checks.checkNotBlank(field, "the field for 'hsetnx' is blank!");
+        Checks.checkNotBlank(value, "the value for 'hsetnx' is blank!");
+        return process(HashCommand.HSETNX, BOOLEAN_ACTION, key, field, value);
+    }
+
+    @Override
+    public long hstrLen(String key, String field) {
+        Checks.checkNotBlank(key, "the key for 'hstrLen' is blank!");
+        Checks.checkNotBlank(field, "the field for 'hstrLen' is blank!");
+        return process(HashCommand.HSTRLEN, LONG_ACTION, key, field);
+    }
+
+    @Override
+    public List<String> hvals(String key) {
+        Checks.checkNotBlank(key, "the key for 'hvals' is blank!");
+        return process(HashCommand.HVALS, ARRAY_ACTION, key);
+    }
+
+    @Override
     public void auth(String password) {
         Checks.checkNotBlank(password, "the password for 'auth' is blank!");
         process(ConnectionCommand.AUTH, OK_ACTION, password);
@@ -490,11 +587,6 @@ public class DefaultJredic implements Jredic {
         this.client = client;
     }
 
-    /**
-     * init resources.
-     *
-     * @throws JredicException
-     */
     public void init() throws JredicException{
 
         try{
@@ -505,11 +597,6 @@ public class DefaultJredic implements Jredic {
 
     }
 
-    /**
-     * destroy resources.
-     *
-     * @throws JredicException
-     */
     public void destroy() throws JredicException{
 
         try{
@@ -604,8 +691,36 @@ public class DefaultJredic implements Jredic {
     private static final Action<String> STRING_ACTION = new StringAction();
     private static final Action<List<String>> ARRAY_ACTION = new ArrayAction();
     private static final Action<Void> OK_ACTION = new OkAction();
+    private static final Action<Map<String, String>> HASH_ACTION = new HashAction();
 
     private static final JredicException ACTION_EXCEPTION = new JredicException();
+
+    /*
+     * for hash.
+     * like hgetall command, in the returned value, every field name is followed by its value as a array.
+     */
+    private static class HashAction implements Action<Map<String, String>>{
+
+        @Override
+        public Map<String, String> doAction(Data data) throws JredicException {
+            if(DataType.ARRAYS.equals(data.getType())){
+                ArraysData arraysData = (ArraysData) data;
+                List<Data> elements = arraysData.getElements();
+                if(elements == null || elements.size() == 0){
+                    return null;
+                }else{
+                    Map<String, String> map = new HashMap<>(elements.size() / 2);
+                    for(int i=0; i<elements.size() ;i+=2){
+                        map.put(((BulkStringsData)elements.get(i)).getStringContent(),
+                                ((BulkStringsData)elements.get(i+1)).getStringContent());
+                    }
+                    return map;
+                }
+            }
+            throw ACTION_EXCEPTION;
+        }
+
+    }
 
     /*
      * for long type number.

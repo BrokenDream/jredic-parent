@@ -9,6 +9,7 @@ package com.jredic.command;
 public class HashCommand extends AbstractCommand {
 
     public static final HashCommand HDEL         = new HashCommand(new String[]{"HDEL"},        "2.0.0");
+    public static final HashCommand HDEL_MU      = new HashCommand(new String[]{"HDEL"},        "2.4",  "with multiple fields");
     public static final HashCommand HEXISTS      = new HashCommand(new String[]{"HEXISTS"},     "2.0.0");
     public static final HashCommand HGET         = new HashCommand(new String[]{"HGET"},        "2.0.0");
     public static final HashCommand HGETALL      = new HashCommand(new String[]{"HGETALL"},     "2.0.0");
@@ -28,4 +29,7 @@ public class HashCommand extends AbstractCommand {
         super(values, startVersion);
     }
 
+    private HashCommand(String[] values, String startVersion, String addition) {
+        super(values, startVersion, addition);
+    }
 }
