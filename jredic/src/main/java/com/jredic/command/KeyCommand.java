@@ -15,7 +15,7 @@ public class KeyCommand extends AbstractCommand {
      * Since Redis 3.0.3 it is possible to specify multiple keys instead of a single one.
      * In such a case, it returns the total number of keys existing.
      */
-    public static final KeyCommand EXISTS_MU = new KeyCommand(new String[]{"EXISTS"},    "3.0.3");
+    public static final KeyCommand EXISTS_MU = new KeyCommand(new String[]{"EXISTS"},    "3.0.3", "with multiple keys");
     public static final KeyCommand EXPIRE    = new KeyCommand(new String[]{"EXPIRE"},    "1.0.0");
     public static final KeyCommand EXPIREAT  = new KeyCommand(new String[]{"EXPIREAT"},  "1.2.0");
     public static final KeyCommand KEYS      = new KeyCommand(new String[]{"KEYS"},      "1.0.0");
@@ -42,4 +42,7 @@ public class KeyCommand extends AbstractCommand {
         super(values, startVersion);
     }
 
+    private KeyCommand(String[] values, String startVersion, String addition) {
+        super(values, startVersion, addition);
+    }
 }

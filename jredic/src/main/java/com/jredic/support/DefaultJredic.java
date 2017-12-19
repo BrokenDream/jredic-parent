@@ -3,19 +3,18 @@ package com.jredic.support;
 import com.jredic.Jredic;
 import com.jredic.Pair;
 import com.jredic.RedisDataType;
-import com.jredic.command.Command;
-import com.jredic.command.Commands;
-import com.jredic.command.KeyCommand;
-import com.jredic.command.StringCommand;
+import com.jredic.command.*;
 import com.jredic.command.sub.*;
 import com.jredic.exception.DataTypeNotSupportException;
 import com.jredic.exception.JredicException;
 import com.jredic.network.client.Client;
 import com.jredic.network.protocol.data.*;
 import com.jredic.util.Checks;
+import com.jredic.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -176,7 +175,21 @@ public class DefaultJredic implements Jredic {
         }catch (JredicException e){
             if(ACTION_EXCEPTION == e){
                 if(DataType.ERRORS.equals(dataType)){
-                    throw new JredicException(((ErrorsData) response).getErrorMsg());
+                    Command cmd = KeyCommand.RESTORE;
+                    StringBuilder errorMessageBuilder = new StringBuilder();
+                    errorMessageBuilder.append("execute command ");
+                    errorMessageBuilder.append(Arrays.toString(cmd.values()));
+                    errorMessageBuilder.append(" ");
+                    if(!Strings.isNullOrEmpty(cmd.addition())){
+                        errorMessageBuilder.append("(");
+                        errorMessageBuilder.append(cmd.addition());
+                        errorMessageBuilder.append(") ");
+                    }
+                    errorMessageBuilder.append("which start with the redis version [");
+                    errorMessageBuilder.append(cmd.startVersion());
+                    errorMessageBuilder.append("] failed! reason:");
+                    errorMessageBuilder.append(((ErrorsData) response).getErrorMsg());
+                    throw new JredicException(errorMessageBuilder.toString());
                 }else{
                     throw new DataTypeNotSupportException(dataType, KeyCommand.RESTORE);
                 }
@@ -439,6 +452,40 @@ public class DefaultJredic implements Jredic {
         return process(StringCommand.STRLEN, LONG_ACTION, key);
     }
 
+    @Override
+    public void auth(String password) {
+        Checks.checkNotBlank(password, "the password for 'auth' is blank!");
+        process(ConnectionCommand.AUTH, OK_ACTION, password);
+    }
+
+    @Override
+    public String echo(String message) {
+        Checks.checkNotBlank(message, "the message for 'echo' is blank!");
+        return process(ConnectionCommand.ECHO, STRING_ACTION, message);
+    }
+
+    @Override
+    public String ping() {
+        return process(ConnectionCommand.PING, STRING_ACTION);
+    }
+
+    @Override
+    public String ping(String message) {
+        Checks.checkNotBlank(message, "the message for 'ping' is blank!");
+        return process(ConnectionCommand.PING, STRING_ACTION, message);
+    }
+
+    @Override
+    public void quit() {
+        process(ConnectionCommand.QUIT, OK_ACTION);
+    }
+
+    @Override
+    public void select(int index) {
+        Checks.checkTrue(index >= 0, "the index for 'select' is negative!");
+        process(ConnectionCommand.SELECT, OK_ACTION, Integer.toString(index));
+    }
+
     public void setClient(Client client) {
         this.client = client;
     }
@@ -514,7 +561,20 @@ public class DefaultJredic implements Jredic {
         }catch (JredicException e){
             if(ACTION_EXCEPTION == e){
                 if(DataType.ERRORS.equals(dataType)){
-                    throw new JredicException(((ErrorsData) response).getErrorMsg());
+                    StringBuilder errorMessageBuilder = new StringBuilder();
+                    errorMessageBuilder.append("execute command ");
+                    errorMessageBuilder.append(Arrays.toString(cmd.values()));
+                    errorMessageBuilder.append(" ");
+                    if(!Strings.isNullOrEmpty(cmd.addition())){
+                        errorMessageBuilder.append("(");
+                        errorMessageBuilder.append(cmd.addition());
+                        errorMessageBuilder.append(") ");
+                    }
+                    errorMessageBuilder.append("which start with the redis version [");
+                    errorMessageBuilder.append(cmd.startVersion());
+                    errorMessageBuilder.append("] failed! reason:");
+                    errorMessageBuilder.append(((ErrorsData) response).getErrorMsg());
+                    throw new JredicException(errorMessageBuilder.toString());
                 }else{
                     throw new DataTypeNotSupportException(dataType, cmd);
                 }

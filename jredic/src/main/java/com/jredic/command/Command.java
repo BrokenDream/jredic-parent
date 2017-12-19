@@ -25,4 +25,12 @@ public interface Command {
      */
     String startVersion();
 
+    /**
+     * Get the additional information of current command.
+     *
+     * @return
+     *      additional information as string.
+     */
+    String addition();
+
 }

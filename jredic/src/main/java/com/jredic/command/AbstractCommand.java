@@ -13,8 +13,18 @@ public abstract class AbstractCommand implements Command {
     //the start version.
     private String startVersion;
 
+    //the addition.
+    private String addition;
+
     protected AbstractCommand(String[] values, String startVersion) {
         this.values = values;
+        this.startVersion = startVersion;
+    }
+
+    protected AbstractCommand(String[] values, String startVersion, String addition) {
+        this.values = values;
+        this.startVersion = startVersion;
+        this.addition = addition;
     }
 
     @Override
@@ -25,6 +35,11 @@ public abstract class AbstractCommand implements Command {
     @Override
     public String startVersion() {
         return startVersion;
+    }
+
+    @Override
+    public String addition() {
+        return addition;
     }
 
 }
